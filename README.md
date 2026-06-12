@@ -1,5 +1,7 @@
 # AsciiDoc Local Preview
 
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/YoshihideShirai.asciidoc-local-preview?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
+
 English | [日本語](README.ja.md)
 
 AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc files locally. It renders the active `.adoc`, `.ad`, `.asciidoc`, or `.asc` editor buffer in a VS Code Webview, with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams available without external services.

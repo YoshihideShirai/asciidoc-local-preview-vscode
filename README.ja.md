@@ -1,5 +1,7 @@
 # AsciiDoc Local Preview
 
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/YoshihideShirai.asciidoc-local-preview?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
+
 [English](README.md) | 日本語
 
 Visual Studio Code で AsciiDoc をローカルプレビューするための拡張機能です。編集中の `.adoc` / `.ad` / `.asciidoc` / `.asc` ファイルを VS Code 内の Webview に表示し、MathJax、Mermaid、PlantUML、Kroki 互換の図表も外部サービスなしで確認できます。
