@@ -1,8 +1,8 @@
 # AsciiDoc Local Preview
 
-[![Version](https://vsmarketplacebadges.dev/version-short/YoshihideShirai.asciidoc-local-preview.svg)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
-[![Installs](https://vsmarketplacebadges.dev/installs-short/YoshihideShirai.asciidoc-local-preview.svg)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
-[![Ratings](https://vsmarketplacebadges.dev/rating-short/YoshihideShirai.asciidoc-local-preview.svg)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
+[![Version](https://vsmarketplacebadges.dev/version-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
+[![Ratings](https://vsmarketplacebadges.dev/rating-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
 
 English | [日本語](README.ja.md)
 
