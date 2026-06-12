@@ -7,6 +7,7 @@ AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoc
 - Live AsciiDoc preview rendered locally with Asciidoctor.js.
 - Preview updates from the unsaved editor buffer.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
+- Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
 - Basic editing commands for bold, italic, monospace, links, section headings, and unordered lists.
 - Snippets for document headers, source blocks, admonitions, and tables.
 
@@ -22,6 +23,7 @@ The preview path is designed to avoid external network access:
 - Remote image URLs are replaced with an empty local data image before rendering.
 - Webview scripts are limited to extension-local resources and nonce-protected inline bootstrap code.
 - Mermaid is loaded from the bundled `media/mermaid.min.js` file, not a CDN or Kroki server.
+- PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
 
 ## Mermaid
 
@@ -47,6 +49,25 @@ mermaid::diagrams/system.mmd[]
 Macro targets must be relative local paths inside the document directory. Remote URLs, absolute paths, and paths outside the document directory are rejected in the preview.
 
 `[source,mermaid]` blocks are also rendered for compatibility with the first implementation.
+
+## PlantUML
+
+Use a Kroki-compatible PlantUML block:
+
+```asciidoc
+[plantuml]
+....
+Alice -> Bob : Hello
+....
+```
+
+`@startuml` / `@enduml` wrappers are added automatically when omitted. You can also reference a local PlantUML source file:
+
+```asciidoc
+plantuml::diagrams/sequence.puml[]
+```
+
+Macro targets must be relative local paths inside the document directory. Remote URLs, absolute paths, and paths outside the document directory are rejected in the preview.
 
 Run the no-network verification phase before publishing or accepting AI-generated changes:
 

@@ -87,6 +87,28 @@ const vendoredFiles = [
 			/\bimportScripts\s*\(/,
 		],
 	},
+	{
+		file: 'media/plantuml.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/viz-global.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
 ];
 
 const failures = [];

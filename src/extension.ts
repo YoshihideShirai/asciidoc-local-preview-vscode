@@ -7,6 +7,7 @@ const asciidoctor = asciidoctorFactory();
 const asciidoctorExtensions = asciidoctor.Extensions.create();
 const previewPanels = new Map<string, AsciiDocPreviewPanel>();
 let diagramProcessorsRegistered = false;
+const diagramBlockNames = ['mermaid', 'plantuml'];
 
 export function activate(context: vscode.ExtensionContext) {
 	registerDiagramProcessors();
@@ -36,45 +37,50 @@ function registerDiagramProcessors() {
 
 	asciidoctorExtensions.preprocessor(function () {
 		this.process(function (_document, reader) {
-			return reader.pushInclude(rewriteMermaidLiteralBlockStyles(reader.readLines()));
+			return reader.pushInclude(rewriteLiteralDiagramBlockStyles(reader.readLines()));
 		});
 	});
 
-	asciidoctorExtensions.block('mermaid', function () {
-		this.onContext('listing');
+	registerDiagramBlock('mermaid', 'listing');
+	registerDiagramBlock('mermaidliteral', 'literal', 'mermaid');
+	registerDiagramBlock('plantuml', 'listing');
+	registerDiagramBlock('plantumlliteral', 'literal', 'plantuml');
+	registerDiagramMacro('mermaid');
+	registerDiagramMacro('plantuml');
+}
+
+function registerDiagramBlock(blockName: string, context: string, diagramType = blockName) {
+	asciidoctorExtensions.block(blockName, function () {
+		this.onContext(context);
 		this.process(function (parent, reader) {
 			const source = reader.getLines().join('\n');
 
-			return this.createBlock(parent, 'pass', renderMermaidBlock(source));
-		});
-	});
-
-	asciidoctorExtensions.block('mermaidliteral', function () {
-		this.onContext('literal');
-		this.process(function (parent, reader) {
-			const source = reader.getLines().join('\n');
-
-			return this.createBlock(parent, 'pass', renderMermaidBlock(source));
-		});
-	});
-
-	asciidoctorExtensions.blockMacro('mermaid', function () {
-		this.process(function (parent, target) {
-			const source = readLocalDiagramSource(parent.getDocument().getBaseDir(), target);
-
-			return this.createBlock(parent, 'pass', source.ok
-				? renderMermaidBlock(source.value)
-				: renderDiagramError(source.value));
+			return this.createBlock(parent, 'pass', renderDiagramBlock(diagramType, source));
 		});
 	});
 }
 
-function rewriteMermaidLiteralBlockStyles(lines: string[]): string[] {
+function registerDiagramMacro(diagramType: string) {
+	asciidoctorExtensions.blockMacro(diagramType, function () {
+		this.process(function (parent, target) {
+			const source = readLocalDiagramSource(diagramType, parent.getDocument().getBaseDir(), target);
+
+			return this.createBlock(parent, 'pass', source.ok
+				? renderDiagramBlock(diagramType, source.value)
+				: renderDiagramError(diagramType, source.value));
+		});
+	});
+}
+
+function rewriteLiteralDiagramBlockStyles(lines: string[]): string[] {
 	const rewritten = [...lines];
 
 	for (let index = 0; index < rewritten.length - 1; index += 1) {
-		if (/^\[mermaid(?=[,\]])/.test(rewritten[index].trim()) && rewritten[index + 1].trim() === '....') {
-			rewritten[index] = rewritten[index].replace('[mermaid', '[mermaidliteral');
+		for (const diagramType of diagramBlockNames) {
+			const stylePattern = new RegExp(`^\\[${diagramType}(?=[,\\]])`);
+			if (stylePattern.test(rewritten[index].trim()) && rewritten[index + 1].trim() === '....') {
+				rewritten[index] = rewritten[index].replace(`[${diagramType}`, `[${diagramType}literal`);
+			}
 		}
 	}
 
@@ -188,12 +194,14 @@ class AsciiDocPreviewPanel {
 		const nonce = getNonce();
 		const cspSource = this.panel.webview.cspSource;
 		const mermaidScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mermaid.min.js'));
+		const plantUmlScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'plantuml.js'));
+		const plantUmlVizScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'viz-global.js'));
 
 		return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
 	<style>
@@ -270,6 +278,15 @@ class AsciiDocPreviewPanel {
 			background: var(--vscode-editor-background);
 		}
 
+		.plantuml-diagram {
+			overflow: auto;
+			margin: 0 0 1rem;
+			padding: 16px;
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			background: var(--vscode-editor-background);
+		}
+
 		.mermaid-diagram svg {
 			display: block;
 			max-width: 100%;
@@ -277,7 +294,23 @@ class AsciiDocPreviewPanel {
 			margin: 0 auto;
 		}
 
+		.plantuml-diagram svg {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			margin: 0 auto;
+		}
+
+		.plantuml-source {
+			display: none;
+		}
+
 		.mermaid-error {
+			white-space: pre-wrap;
+			color: var(--vscode-errorForeground);
+		}
+
+		.plantuml-error {
 			white-space: pre-wrap;
 			color: var(--vscode-errorForeground);
 		}
@@ -350,6 +383,7 @@ class AsciiDocPreviewPanel {
 		})();
 	</script>
 	<script nonce="${nonce}" src="${mermaidScriptUri}"></script>
+	<script nonce="${nonce}" src="${plantUmlVizScriptUri}"></script>
 	<script nonce="${nonce}">
 		(async () => {
 			const api = window.mermaid;
@@ -373,6 +407,28 @@ class AsciiDocPreviewPanel {
 			}
 		});
 	</script>
+	<script nonce="${nonce}" type="module">
+		import { renderToString } from '${plantUmlScriptUri}';
+
+		for (const diagram of document.querySelectorAll('.plantuml-diagram')) {
+			const source = diagram.querySelector('.plantuml-source');
+			const output = diagram.querySelector('.plantuml-output');
+			if (!source || !output) {
+				continue;
+			}
+
+			renderToString(
+				source.textContent.split(/\\r\\n|\\r|\\n/),
+				(svg) => {
+					output.innerHTML = svg;
+				},
+				(message) => {
+					output.classList.add('plantuml-error');
+					output.textContent = String(message || 'PlantUML rendering failed');
+				},
+			);
+		}
+	</script>
 </body>
 </html>`;
 	}
@@ -394,7 +450,7 @@ function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview)
 			extension_registry: asciidoctorExtensions,
 		});
 
-		return rewriteMermaidBlocks(rewriteLocalImageUris(String(converted), document, webview));
+		return rewriteSourceDiagramBlocks(rewriteLocalImageUris(String(converted), document, webview));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 
@@ -449,28 +505,50 @@ function blockedImageUri(): string {
 	return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 }
 
-function rewriteMermaidBlocks(html: string): string {
-	return html.replace(
+function rewriteSourceDiagramBlocks(html: string): string {
+	const withMermaid = html.replace(
 		/<div class="listingblock">\s*<div class="content">\s*<pre class="highlight"><code class="language-mermaid" data-lang="mermaid">([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/gi,
 		(_match: string, source: string) => `<div class="mermaid-diagram"><pre class="mermaid">${source}</pre></div>`,
 	);
+
+	return withMermaid.replace(
+		/<div class="listingblock">\s*<div class="content">\s*<pre class="highlight"><code class="language-plantuml" data-lang="plantuml">([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/gi,
+		(_match: string, source: string) => renderDiagramBlock('plantuml', unescapeHtml(source)),
+	);
 }
 
-function renderMermaidBlock(source: string): string {
-	return `<div class="mermaid-diagram"><pre class="mermaid">${escapeHtml(source)}</pre></div>`;
+function renderDiagramBlock(diagramType: string, source: string): string {
+	if (diagramType === 'mermaid') {
+		return `<div class="mermaid-diagram"><pre class="mermaid">${escapeHtml(source)}</pre></div>`;
+	}
+
+	if (diagramType === 'plantuml') {
+		return `<div class="plantuml-diagram"><pre class="plantuml-source">${escapeHtml(normalizePlantUmlSource(source))}</pre><div class="plantuml-output"></div></div>`;
+	}
+
+	return renderDiagramError(diagramType, `Unsupported diagram type: ${diagramType}`);
 }
 
-function renderDiagramError(message: string): string {
-	return `<div class="mermaid-diagram mermaid-error">${escapeHtml(message)}</div>`;
+function renderDiagramError(diagramType: string, message: string): string {
+	return `<div class="${escapeHtml(diagramType)}-diagram ${escapeHtml(diagramType)}-error">${escapeHtml(message)}</div>`;
 }
 
-function readLocalDiagramSource(baseDir: string, target: string): { ok: true; value: string } | { ok: false; value: string } {
+function normalizePlantUmlSource(source: string): string {
+	const trimmed = source.trim();
+	if (/^@start\w*/i.test(trimmed)) {
+		return source;
+	}
+
+	return `@startuml\n${source}\n@enduml`;
+}
+
+function readLocalDiagramSource(diagramType: string, baseDir: string, target: string): { ok: true; value: string } | { ok: false; value: string } {
 	if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(target)) {
-		return { ok: false, value: `Remote Mermaid macro targets are disabled: ${target}` };
+		return { ok: false, value: `Remote ${diagramType} macro targets are disabled: ${target}` };
 	}
 
 	if (path.isAbsolute(target)) {
-		return { ok: false, value: `Absolute Mermaid macro targets are disabled: ${target}` };
+		return { ok: false, value: `Absolute ${diagramType} macro targets are disabled: ${target}` };
 	}
 
 	const resolvedBaseDir = path.resolve(baseDir);
@@ -478,7 +556,7 @@ function readLocalDiagramSource(baseDir: string, target: string): { ok: true; va
 	const relativeTarget = path.relative(resolvedBaseDir, resolvedTarget);
 
 	if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
-		return { ok: false, value: `Mermaid macro target is outside the document directory: ${target}` };
+		return { ok: false, value: `${diagramType} macro target is outside the document directory: ${target}` };
 	}
 
 	try {
@@ -486,7 +564,7 @@ function readLocalDiagramSource(baseDir: string, target: string): { ok: true; va
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 
-		return { ok: false, value: `Unable to read Mermaid macro target ${target}: ${message}` };
+		return { ok: false, value: `Unable to read ${diagramType} macro target ${target}: ${message}` };
 	}
 }
 
@@ -537,6 +615,15 @@ function escapeHtml(value: string): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
+}
+
+function unescapeHtml(value: string): string {
+	return value
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'")
+		.replace(/&amp;/g, '&');
 }
 
 function getNonce() {

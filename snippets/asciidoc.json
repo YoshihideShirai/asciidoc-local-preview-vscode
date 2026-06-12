@@ -41,6 +41,25 @@
 		],
 		"description": "Insert a local Mermaid diagram macro"
 	},
+	"PlantUML diagram": {
+		"prefix": "plantuml",
+		"body": [
+			"[plantuml]",
+			"....",
+			"Alice -> Bob : ${1:Hello}",
+			"....",
+			"$0"
+		],
+		"description": "Insert a local PlantUML diagram block"
+	},
+	"PlantUML diagram macro": {
+		"prefix": "plantumlmacro",
+		"body": [
+			"plantuml::${1:diagrams/example.puml}[]",
+			"$0"
+		],
+		"description": "Insert a local PlantUML diagram macro"
+	},
 	"Admonition": {
 		"prefix": "admon",
 		"body": [
