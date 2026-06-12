@@ -5,15 +5,17 @@ import * as vscode from 'vscode';
 import { emojiMap } from './emoji-map';
 
 const asciidoctor = asciidoctorFactory();
-const asciidoctorExtensions = asciidoctor.Extensions.create();
 const previewPanels = new Map<string, AsciiDocPreviewPanel>();
-let diagramProcessorsRegistered = false;
+let outputChannel: vscode.OutputChannel | undefined;
 const diagramBlockNames = ['mermaid', 'plantuml', 'nomnoml', 'vega', 'vegalite', 'wavedrom', 'bytefield'];
+const livePreviewUpdateDelayMs = 150;
 
 export function activate(context: vscode.ExtensionContext) {
-	registerDiagramProcessors();
+	outputChannel = vscode.window.createOutputChannel('AsciiDoc Local Preview');
+	trace('activate');
 
 	context.subscriptions.push(
+		outputChannel,
 		vscode.commands.registerCommand('asciidoc-local-preview.openPreview', () => openPreview(context.extensionUri)),
 		vscode.commands.registerCommand('asciidoc-local-preview.refreshPreview', () => refreshVisiblePreviews()),
 		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.toggleBold', (editor) => wrapSelection(editor, '*', '*', 'strong text')),
@@ -24,35 +26,36 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertUnorderedList', (editor) => prefixSelectionLines(editor, '* ')),
 		vscode.workspace.onDidChangeTextDocument((event) => {
 			const panel = previewPanels.get(event.document.uri.toString());
-			panel?.update(event.document);
+			if (panel) {
+				trace('document changed', getTraceDocumentDetails(event.document));
+			}
+			panel?.scheduleUpdate(event.document);
 		}),
 	);
 }
 
-function registerDiagramProcessors() {
-	if (diagramProcessorsRegistered) {
-		return;
-	}
+function createAsciiDocExtensions() {
+	const registry = asciidoctor.Extensions.create();
 
-	diagramProcessorsRegistered = true;
-
-	asciidoctorExtensions.preprocessor(function () {
+	registry.preprocessor(function () {
 		this.process(function (_document, reader) {
 			return reader.pushInclude(rewriteLiteralDiagramBlockStyles(reader.readLines()));
 		});
 	});
 
 	for (const diagramType of diagramBlockNames) {
-		registerDiagramBlock(diagramType, 'listing');
-		registerDiagramBlock(`${diagramType}literal`, 'literal', diagramType);
-		registerDiagramMacro(diagramType);
+		registerDiagramBlock(registry, diagramType, 'listing');
+		registerDiagramBlock(registry, `${diagramType}literal`, 'literal', diagramType);
+		registerDiagramMacro(registry, diagramType);
 	}
 
-	registerEmojiMacro();
+	registerEmojiMacro(registry);
+
+	return registry;
 }
 
-function registerDiagramBlock(blockName: string, context: string, diagramType = blockName) {
-	asciidoctorExtensions.block(blockName, function () {
+function registerDiagramBlock(registry: ReturnType<typeof asciidoctor.Extensions.create>, blockName: string, context: string, diagramType = blockName) {
+	registry.block(blockName, function () {
 		this.onContext(context);
 		this.process(function (parent, reader) {
 			const source = reader.getLines().join('\n');
@@ -62,8 +65,8 @@ function registerDiagramBlock(blockName: string, context: string, diagramType = 
 	});
 }
 
-function registerDiagramMacro(diagramType: string) {
-	asciidoctorExtensions.blockMacro(diagramType, function () {
+function registerDiagramMacro(registry: ReturnType<typeof asciidoctor.Extensions.create>, diagramType: string) {
+	registry.blockMacro(diagramType, function () {
 		this.process(function (parent, target) {
 			const source = readLocalDiagramSource(diagramType, parent.getDocument().getBaseDir(), target);
 
@@ -74,8 +77,8 @@ function registerDiagramMacro(diagramType: string) {
 	});
 }
 
-function registerEmojiMacro() {
-	asciidoctorExtensions.inlineMacro('emoji', function () {
+function registerEmojiMacro(registry: ReturnType<typeof asciidoctor.Extensions.create>) {
+	registry.inlineMacro('emoji', function () {
 		this.positionalAttributes('size');
 		this.process(function (parent, target, attrs) {
 			const emoji = renderEmoji(target, attrs.size);
@@ -101,6 +104,7 @@ function rewriteLiteralDiagramBlockStyles(lines: string[]): string[] {
 }
 
 export function deactivate() {
+	trace('deactivate');
 	for (const panel of previewPanels.values()) {
 		panel.dispose();
 	}
@@ -110,13 +114,16 @@ export function deactivate() {
 function openPreview(extensionUri: vscode.Uri) {
 	const document = getActiveAsciiDocDocument();
 	if (!document) {
+		trace('openPreview skipped: no active AsciiDoc document');
 		vscode.window.showWarningMessage('Open an AsciiDoc file before starting the preview.');
 		return;
 	}
 
+	trace('openPreview requested', getTraceDocumentDetails(document));
 	const key = document.uri.toString();
 	const existing = previewPanels.get(key);
 	if (existing) {
+		trace('openPreview revealing existing panel', getTraceDocumentDetails(document));
 		existing.reveal();
 		existing.update(document);
 		return;
@@ -127,6 +134,7 @@ function openPreview(extensionUri: vscode.Uri) {
 }
 
 function refreshVisiblePreviews() {
+	trace('refreshVisiblePreviews', { panels: previewPanels.size });
 	for (const panel of previewPanels.values()) {
 		panel.refresh();
 	}
@@ -145,11 +153,52 @@ function getActiveAsciiDocDocument(): vscode.TextDocument | undefined {
 	return undefined;
 }
 
+type WebviewTraceMessage = {
+	type?: string;
+	renderId?: string;
+	event?: string;
+	data?: Record<string, unknown>;
+};
+
+function trace(event: string, data?: Record<string, unknown>) {
+	const suffix = data ? ` ${JSON.stringify(data)}` : '';
+	outputChannel?.appendLine(`[${new Date().toISOString()}] ${event}${suffix}`);
+}
+
+function getTraceDocumentDetails(document: vscode.TextDocument): Record<string, unknown> {
+	return {
+		uri: document.uri.toString(),
+		version: document.version,
+		languageId: document.languageId,
+		lineCount: document.lineCount,
+		isDirty: document.isDirty,
+	};
+}
+
+function countPreviewBlocks(html: string): Record<string, number> {
+	return {
+		mermaid: countOccurrences(html, 'class="mermaid"'),
+		plantuml: countOccurrences(html, 'plantuml-diagram'),
+		mathStem: countOccurrences(html, 'class="stem"') + countOccurrences(html, 'class="inline-stem"'),
+		nomnoml: countOccurrences(html, 'nomnoml-diagram'),
+		vega: countOccurrences(html, 'vega-diagram'),
+		vegalite: countOccurrences(html, 'vegalite-diagram'),
+		wavedrom: countOccurrences(html, 'wavedrom-diagram'),
+		bytefield: countOccurrences(html, 'bytefield-diagram'),
+	};
+}
+
+function countOccurrences(value: string, needle: string): number {
+	return value.split(needle).length - 1;
+}
+
 class AsciiDocPreviewPanel {
 	private readonly panel: vscode.WebviewPanel;
 	private readonly documentUri: vscode.Uri;
 	private readonly disposables: vscode.Disposable[] = [];
 	private document: vscode.TextDocument;
+	private pendingUpdate: ReturnType<typeof setTimeout> | undefined;
+	private renderSequence = 0;
 	private disposed = false;
 
 	constructor(private readonly extensionUri: vscode.Uri, document: vscode.TextDocument) {
@@ -166,11 +215,24 @@ class AsciiDocPreviewPanel {
 			},
 		);
 
+		trace('preview panel created', getTraceDocumentDetails(document));
 		this.panel.onDidDispose(() => this.dispose(), undefined, this.disposables);
+		this.panel.webview.onDidReceiveMessage((message: WebviewTraceMessage) => {
+			if (message.type !== 'trace') {
+				trace('webview message ignored', { messageType: message.type });
+				return;
+			}
+
+			trace(`webview:${message.event}`, {
+				renderId: message.renderId,
+				...message.data,
+			});
+		}, undefined, this.disposables);
 		this.update(document);
 	}
 
 	reveal() {
+		trace('preview panel reveal', { document: this.documentUri.toString() });
 		this.panel.reveal(vscode.ViewColumn.Beside);
 	}
 
@@ -179,12 +241,45 @@ class AsciiDocPreviewPanel {
 			return;
 		}
 
+		this.cancelPendingUpdate();
 		this.document = document;
 		this.panel.title = `Preview: ${getDocumentTitle(document)}`;
-		this.panel.webview.html = this.render(document);
+		this.renderSequence += 1;
+		const renderId = `${Date.now()}-${this.renderSequence}`;
+		trace('preview update start', {
+			renderId,
+			...getTraceDocumentDetails(document),
+		});
+		const body = this.renderBody(document);
+		trace('preview body rendered', {
+			renderId,
+			bodyLength: body.length,
+			...countPreviewBlocks(body),
+		});
+		this.panel.webview.html = this.render(document, body, renderId);
+		trace('preview html assigned', { renderId });
+	}
+
+	scheduleUpdate(document: vscode.TextDocument) {
+		if (document.uri.toString() !== this.documentUri.toString()) {
+			return;
+		}
+
+		this.document = document;
+		this.cancelPendingUpdate();
+		trace('preview update scheduled', {
+			delayMs: livePreviewUpdateDelayMs,
+			...getTraceDocumentDetails(document),
+		});
+		this.pendingUpdate = setTimeout(() => {
+			this.pendingUpdate = undefined;
+			trace('preview scheduled update fired', getTraceDocumentDetails(this.document));
+			this.update(this.document);
+		}, livePreviewUpdateDelayMs);
 	}
 
 	refresh() {
+		trace('preview refresh requested', { document: this.documentUri.toString() });
 		this.update(this.document);
 	}
 
@@ -194,7 +289,9 @@ class AsciiDocPreviewPanel {
 		}
 
 		this.disposed = true;
+		trace('preview panel disposed', { document: this.documentUri.toString() });
 		previewPanels.delete(this.documentUri.toString());
+		this.cancelPendingUpdate();
 		this.panel.dispose();
 
 		while (this.disposables.length > 0) {
@@ -202,8 +299,11 @@ class AsciiDocPreviewPanel {
 		}
 	}
 
-	private render(document: vscode.TextDocument): string {
-		const body = convertAsciiDoc(document, this.panel.webview);
+	private renderBody(document: vscode.TextDocument): string {
+		return convertAsciiDoc(document, this.panel.webview);
+	}
+
+	private render(document: vscode.TextDocument, body: string, renderId: string): string {
 		const nonce = getNonce();
 		const cspSource = this.panel.webview.cspSource;
 		const antoraPreviewStyleUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'antora-default-preview.css'));
@@ -284,6 +384,46 @@ class AsciiDocPreviewPanel {
 	</article>
 	</main>
 	<script nonce="${nonce}">
+		const vscodeApi = acquireVsCodeApi();
+		const previewRenderId = '${escapeJavaScriptString(renderId)}';
+		const tracePreview = (event, data = {}) => {
+			vscodeApi.postMessage({
+				type: 'trace',
+				renderId: previewRenderId,
+				event,
+				data
+			});
+		};
+
+		window.addEventListener('error', (event) => {
+			tracePreview('window.error', {
+				message: String(event.message || ''),
+				filename: String(event.filename || ''),
+				line: event.lineno,
+				column: event.colno
+			});
+		});
+
+		window.addEventListener('unhandledrejection', (event) => {
+			const reason = event.reason;
+			tracePreview('window.unhandledrejection', {
+				message: String(reason && reason.message ? reason.message : reason)
+			});
+		});
+
+		tracePreview('webview.loaded', {
+			htmlLength: document.documentElement.outerHTML.length,
+			mermaid: document.querySelectorAll('.mermaid').length,
+			plantuml: document.querySelectorAll('.plantuml-diagram').length,
+			math: document.querySelectorAll('mjx-container, .stem, .inline-stem').length,
+			nomnoml: document.querySelectorAll('.nomnoml-diagram').length,
+			vega: document.querySelectorAll('.vega-diagram').length,
+			vegalite: document.querySelectorAll('.vegalite-diagram').length,
+			wavedrom: document.querySelectorAll('.wavedrom-diagram').length,
+			bytefield: document.querySelectorAll('.bytefield-diagram').length
+		});
+	</script>
+	<script nonce="${nonce}">
 		(() => {
 			const block = (name) => () => {
 				throw new Error(name + ' is disabled in the AsciiDoc preview.');
@@ -346,10 +486,20 @@ class AsciiDocPreviewPanel {
 	</script>
 	<script nonce="${nonce}" id="MathJax-script" src="${mathJaxScriptUri}"></script>
 	<script nonce="${nonce}">
+		tracePreview('mathjax.start', {
+			targets: document.querySelectorAll('.asciidoc-preview .stem, .asciidoc-preview .inline-stem, .asciidoc-preview script[type^="math/tex"]').length,
+			hasMathJax: Boolean(window.MathJax)
+		});
 		MathJax.startup.promise
 			.then(() => MathJax.typesetPromise([document.querySelector('.asciidoc-preview')]))
+			.then(() => {
+				tracePreview('mathjax.done', {
+					rendered: document.querySelectorAll('.asciidoc-preview mjx-container').length
+				});
+			})
 			.catch((error) => {
 				const message = String(error && error.message ? error.message : error);
+				tracePreview('mathjax.error', { message });
 				const container = document.createElement('pre');
 				container.className = 'mathjax-error';
 				container.textContent = message;
@@ -360,6 +510,10 @@ class AsciiDocPreviewPanel {
 	<script nonce="${nonce}">
 		(async () => {
 			const api = window.mermaid;
+			tracePreview('mermaid.start', {
+				nodes: document.querySelectorAll('.mermaid').length,
+				hasMermaid: Boolean(api)
+			});
 			if (!api) {
 				return;
 			}
@@ -373,34 +527,65 @@ class AsciiDocPreviewPanel {
 			await api.run({
 				querySelector: '.mermaid'
 			});
+			tracePreview('mermaid.done', {
+				nodes: document.querySelectorAll('.mermaid').length,
+				svgs: document.querySelectorAll('.mermaid svg').length
+			});
 		})().catch((error) => {
+			const message = String(error && error.message ? error.message : error);
+			tracePreview('mermaid.error', { message });
 			for (const diagram of document.querySelectorAll('.mermaid')) {
 				diagram.classList.add('mermaid-error');
-				diagram.textContent = String(error && error.message ? error.message : error);
+				diagram.textContent = message;
 			}
 		});
 	</script>
 	<script nonce="${nonce}" type="module">
 		import { renderToString } from '${plantUmlScriptUri}';
 
+		tracePreview('plantuml.start', {
+			nodes: document.querySelectorAll('.plantuml-diagram').length,
+			hasRenderToString: typeof renderToString === 'function'
+		});
+		let plantUmlRendered = 0;
+		let plantUmlFailed = 0;
 		for (const diagram of document.querySelectorAll('.plantuml-diagram')) {
 			const source = diagram.querySelector('.plantuml-source');
 			const output = diagram.querySelector('.plantuml-output');
 			if (!source || !output) {
+				tracePreview('plantuml.skip', {
+					hasSource: Boolean(source),
+					hasOutput: Boolean(output)
+				});
 				continue;
 			}
 
 			renderToString(
 				source.textContent.split(/\\r\\n|\\r|\\n/),
 				(svg) => {
+					plantUmlRendered += 1;
 					output.innerHTML = svg;
+					tracePreview('plantuml.rendered', {
+						rendered: plantUmlRendered,
+						failed: plantUmlFailed,
+						svgLength: svg.length
+					});
 				},
 				(message) => {
+					plantUmlFailed += 1;
+					tracePreview('plantuml.error', {
+						rendered: plantUmlRendered,
+						failed: plantUmlFailed,
+						message: String(message || 'PlantUML rendering failed')
+					});
 					output.classList.add('plantuml-error');
 					output.textContent = String(message || 'PlantUML rendering failed');
 				},
 			);
 		}
+		tracePreview('plantuml.queued', {
+			nodes: document.querySelectorAll('.plantuml-diagram').length
+		});
 	</script>
 	<script nonce="${nonce}">
 		(() => {
@@ -409,6 +594,12 @@ class AsciiDocPreviewPanel {
 				output.textContent = String(message || 'Diagram rendering failed');
 			};
 
+			tracePreview('nomnoml.start', {
+				nodes: document.querySelectorAll('.nomnoml-diagram').length,
+				hasNomnoml: Boolean(window.nomnoml)
+			});
+			let rendered = 0;
+			let failed = 0;
 			for (const diagram of document.querySelectorAll('.nomnoml-diagram')) {
 				const source = diagram.querySelector('.nomnoml-source');
 				const output = diagram.querySelector('.nomnoml-output');
@@ -418,14 +609,26 @@ class AsciiDocPreviewPanel {
 
 				try {
 					output.innerHTML = window.nomnoml.renderSvg(source.textContent);
+					rendered += 1;
 				} catch (error) {
+					failed += 1;
 					showDiagramError(output, error && error.message ? error.message : error);
 				}
 			}
+			tracePreview('nomnoml.done', { rendered, failed });
 		})();
 	</script>
 	<script nonce="${nonce}">
 		(async () => {
+			tracePreview('vega.start', {
+				vega: document.querySelectorAll('.vega-diagram').length,
+				vegalite: document.querySelectorAll('.vegalite-diagram').length,
+				hasVega: Boolean(window.vega),
+				hasVegaLite: Boolean(window.vegaLite),
+				hasInterpreter: Boolean(window.vegaInterpreter)
+			});
+			let rendered = 0;
+			let failed = 0;
 			const renderVega = async (diagram, diagramType) => {
 				const source = diagram.querySelector('.' + diagramType + '-source');
 				const output = diagram.querySelector('.' + diagramType + '-output');
@@ -447,7 +650,9 @@ class AsciiDocPreviewPanel {
 						.hover();
 
 					await view.runAsync();
+					rendered += 1;
 				} catch (error) {
+					failed += 1;
 					output.classList.add('diagram-error');
 					output.textContent = String(error && error.message ? error.message : error);
 				}
@@ -458,10 +663,18 @@ class AsciiDocPreviewPanel {
 					await renderVega(diagram, diagramType);
 				}
 			}
+			tracePreview('vega.done', { rendered, failed });
 		})();
 	</script>
 	<script nonce="${nonce}">
 		(() => {
+			tracePreview('wavedrom.start', {
+				nodes: document.querySelectorAll('.wavedrom-diagram').length,
+				hasWaveDrom: Boolean(window.WaveDrom),
+				hasJson5: Boolean(window.JSON5)
+			});
+			let rendered = 0;
+			let failed = 0;
 			for (const [index, diagram] of [...document.querySelectorAll('.wavedrom-diagram')].entries()) {
 				const source = diagram.querySelector('.wavedrom-source');
 				const output = diagram.querySelector('.wavedrom-output');
@@ -474,15 +687,23 @@ class AsciiDocPreviewPanel {
 					const displayPrefix = 'WaveDrom_Display_';
 					output.id = displayPrefix + index;
 					window.WaveDrom.RenderWaveForm(index, spec, displayPrefix, false);
+					rendered += 1;
 				} catch (error) {
+					failed += 1;
 					output.classList.add('diagram-error');
 					output.textContent = String(error && error.message ? error.message : error);
 				}
 			}
+			tracePreview('wavedrom.done', { rendered, failed });
 		})();
 	</script>
 	<script nonce="${nonce}">
 		(() => {
+			tracePreview('bytefield.start', {
+				nodes: document.querySelectorAll('.bytefield-diagram').length,
+				hasBitfield: Boolean(window.bitfield),
+				hasJson5: Boolean(window.JSON5)
+			});
 			const svgNamespace = 'http' + '://www.w3.org/2000/svg';
 			const isAttributes = (value) => value && typeof value === 'object' && !Array.isArray(value);
 			const createSvgNode = (jsonMl) => {
@@ -510,6 +731,8 @@ class AsciiDocPreviewPanel {
 				return element;
 			};
 
+			let rendered = 0;
+			let failed = 0;
 			for (const diagram of document.querySelectorAll('.bytefield-diagram')) {
 				const source = diagram.querySelector('.bytefield-source');
 				const output = diagram.querySelector('.bytefield-output');
@@ -526,20 +749,34 @@ class AsciiDocPreviewPanel {
 					}
 
 					output.replaceChildren(createSvgNode(window.bitfield.render(fields, options)));
+					rendered += 1;
 				} catch (error) {
+					failed += 1;
 					output.classList.add('diagram-error');
 					output.textContent = String(error && error.message ? error.message : error);
 				}
 			}
+			tracePreview('bytefield.done', { rendered, failed });
 		})();
 	</script>
 </body>
 </html>`;
 	}
+
+	private cancelPendingUpdate() {
+		if (this.pendingUpdate === undefined) {
+			return;
+		}
+
+		clearTimeout(this.pendingUpdate);
+		this.pendingUpdate = undefined;
+	}
+
 }
 
 function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview): string {
 	try {
+		const extensionRegistry = createAsciiDocExtensions();
 		const converted = asciidoctor.convert(document.getText(), {
 			safe: 'safe',
 			backend: 'html5',
@@ -552,7 +789,7 @@ function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview)
 				stem: 'latexmath',
 				'allow-uri-read': false,
 			},
-			extension_registry: asciidoctorExtensions,
+			extension_registry: extensionRegistry,
 		});
 
 		return rewriteSourceDiagramBlocks(rewriteLocalImageUris(String(converted), document, webview));
@@ -770,6 +1007,16 @@ function escapeHtml(value: string): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
+}
+
+function escapeJavaScriptString(value: string): string {
+	return value
+		.replace(/\\/g, '\\\\')
+		.replace(/'/g, "\\'")
+		.replace(/\r/g, '\\r')
+		.replace(/\n/g, '\\n')
+		.replace(/\u2028/g, '\\u2028')
+		.replace(/\u2029/g, '\\u2029');
 }
 
 function unescapeHtml(value: string): string {
