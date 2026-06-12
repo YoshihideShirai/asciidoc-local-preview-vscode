@@ -35,7 +35,8 @@
       {
         "command": "asciidoc-local-preview.openPreview",
         "title": "Open Local AsciiDoc Preview",
-        "category": "AsciiDoc"
+        "category": "AsciiDoc",
+        "icon": "$(open-preview)"
       },
       {
         "command": "asciidoc-local-preview.refreshPreview",
