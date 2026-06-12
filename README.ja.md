@@ -21,6 +21,21 @@ Visual Studio Code で AsciiDoc をローカルプレビューするための拡
 - ドキュメントヘッダー、ソースブロック、admonition、表などのスニペットを提供します。
 - CDN、Kroki サーバー、外部画像読み込みに依存しないプレビュー経路を重視しています。
 
+
+## 差別化ポイント
+
+AsciiDoc Local Preview は、`asciidoctor/asciidoctor-vscode` よりも「ローカルで安全にプレビューすること」に絞った拡張です。
+
+| 観点 | AsciiDoc Local Preview | `asciidoctor/asciidoctor-vscode` |
+| --- | --- | --- |
+| 目的 | ローカルプレビュー特化 | AsciiDoc 総合支援 |
+| 図表 | 主要図表を同梱アセットで描画 | Kroki 連携で幅広く対応 |
+| 外部送信 | 既定で送らない設計 | Kroki 利用時は送信あり |
+| PlantUML | Java / Graphviz 不要 | Kroki 連携で描画 |
+| 数式・絵文字 | MathJax / emoji を同梱対応 | 拡張で追加可能 |
+| 出力 | なし | PDF / HTML / DocBook |
+| 向く用途 | 機密文書・オフライン確認 | 変換や出力まで行う制作環境 |
+
 ## Getting Started
 
 1. VS Code で AsciiDoc ファイルを開きます。
