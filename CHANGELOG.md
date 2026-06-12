@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-06-13
+
+- Add AsciiDoc syntax highlighting and language configuration.
+- Improve Mermaid, PlantUML, and README marketplace preview presentation.
+- Align marketplace badges and README spacing.
+
 ## [0.0.2] - 2026-06-13
 
 - Initial release
