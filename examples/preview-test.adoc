@@ -54,6 +54,7 @@ Different sizes: emoji:wink[lg] emoji:rocket[3x] emoji:bear[42px]
 
 == Mermaid
 
+.Flowchart
 [mermaid]
 ----
 graph TD
@@ -62,6 +63,7 @@ graph TD
     B -- No --> D[Block network access]
 ----
 
+.Sequence diagram
 [mermaid]
 ....
 sequenceDiagram
@@ -70,6 +72,65 @@ sequenceDiagram
     User->>Preview: Open AsciiDoc file
     Preview-->>User: Render bundled Mermaid
 ....
+
+.Class diagram
+[mermaid]
+----
+classDiagram
+    class PreviewDocument {
+        +render()
+        +refresh()
+    }
+    class DiagramRenderer {
+        +renderMermaid(source)
+    }
+    PreviewDocument --> DiagramRenderer : delegates
+----
+
+.State diagram
+[mermaid]
+----
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Rendering: preview opened
+    Rendering --> Ready: SVG generated
+    Rendering --> Error: renderer failed
+    Ready --> Rendering: document changed
+    Error --> Rendering: retry
+----
+
+.Entity relationship diagram
+[mermaid]
+----
+erDiagram
+    DOCUMENT ||--o{ DIAGRAM_BLOCK : contains
+    DIAGRAM_BLOCK }o--|| RENDERER : uses
+    RENDERER ||--|| WEBVIEW : updates
+----
+
+.Gantt chart
+[mermaid]
+----
+gantt
+    title Local preview rendering
+    dateFormat  YYYY-MM-DD
+    section Parse
+    Read document      :done,    parse, 2026-01-01, 1d
+    Extract diagrams   :active,  scan,  after parse, 1d
+    section Render
+    Load bundled assets :assets, after scan, 1d
+    Update Webview      :view,   after assets, 1d
+----
+
+.Pie chart
+[mermaid]
+----
+pie showData
+    title Preview diagram coverage
+    "Mermaid" : 8
+    "PlantUML" : 6
+    "Other diagrams" : 5
+----
 
 == PlantUML
 
@@ -159,7 +220,7 @@ package "VS Code Webview" {
 {
   "data": {
     "values": [
-      {"category": "Mermaid", "count": 3},
+      {"category": "Mermaid", "count": 8},
       {"category": "PlantUML", "count": 6},
       {"category": "Vega-Lite", "count": 4}
     ]
