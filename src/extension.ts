@@ -2,6 +2,7 @@ import asciidoctorFactory from 'asciidoctor';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { emojiMap } from './emoji-map';
 
 const asciidoctor = asciidoctorFactory();
 const asciidoctorExtensions = asciidoctor.Extensions.create();
@@ -46,6 +47,8 @@ function registerDiagramProcessors() {
 		registerDiagramBlock(`${diagramType}literal`, 'literal', diagramType);
 		registerDiagramMacro(diagramType);
 	}
+
+	registerEmojiMacro();
 }
 
 function registerDiagramBlock(blockName: string, context: string, diagramType = blockName) {
@@ -67,6 +70,17 @@ function registerDiagramMacro(diagramType: string) {
 			return this.createBlock(parent, 'pass', source.ok
 				? renderDiagramBlock(diagramType, source.value)
 				: renderDiagramError(diagramType, source.value));
+		});
+	});
+}
+
+function registerEmojiMacro() {
+	asciidoctorExtensions.inlineMacro('emoji', function () {
+		this.positionalAttributes('size');
+		this.process(function (parent, target, attrs) {
+			const emoji = renderEmoji(target, attrs.size);
+
+			return this.createInlinePass(parent, emoji);
 		});
 	});
 }
@@ -254,6 +268,12 @@ class AsciiDocPreviewPanel {
 		.mathjax-error {
 			white-space: pre-wrap;
 			color: var(--vscode-error-color);
+		}
+
+		.emoji {
+			display: inline-block;
+			line-height: 1;
+			vertical-align: -0.125em;
 		}
 	</style>
 </head>
@@ -623,6 +643,49 @@ function renderClientSideDiagramBlock(diagramType: string, source: string): stri
 
 function renderDiagramError(diagramType: string, message: string): string {
 	return `<div class="${escapeHtml(diagramType)}-diagram ${escapeHtml(diagramType)}-error diagram-error">${escapeHtml(message)}</div>`;
+}
+
+function renderEmoji(target: string, sizeAttr: string | undefined): string {
+	const unicode = emojiMap[target];
+	if (!unicode) {
+		return `<span class="emoji emoji-missing">[emoji ${escapeHtml(target)} not found]</span>`;
+	}
+
+	const label = escapeHtml(target);
+	const size = resolveEmojiSize(sizeAttr);
+	const emoji = escapeHtml(unicodeCodepointsToText(unicode));
+
+	return `<span class="emoji" role="img" aria-label="${label}" title="${label}" style="font-size: ${size};">${emoji}</span>`;
+}
+
+function resolveEmojiSize(sizeAttr: string | undefined): string {
+	const defaultSize = '24px';
+	const sizeMap: Record<string, string> = {
+		'1x': '17px',
+		lg: defaultSize,
+		'2x': '34px',
+		'3x': '50px',
+		'4x': '68px',
+		'5x': '85px',
+	};
+	const trimmed = sizeAttr?.trim();
+
+	if (!trimmed) {
+		return defaultSize;
+	}
+
+	if (/^\d{1,3}px$/.test(trimmed)) {
+		return trimmed;
+	}
+
+	return sizeMap[trimmed] ?? defaultSize;
+}
+
+function unicodeCodepointsToText(value: string): string {
+	return value
+		.split('-')
+		.map((codepoint) => String.fromCodePoint(Number.parseInt(codepoint, 16)))
+		.join('');
 }
 
 function normalizePlantUmlSource(source: string): string {

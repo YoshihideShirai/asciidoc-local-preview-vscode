@@ -41,6 +41,14 @@ Inline math: latexmath:[E = mc^2]
 \int_0^1 x^2 dx = \frac{1}{3}
 ++++
 
+== Emoji
+
+Emoji macros should render locally as Unicode text:
+
+I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
+
+Different sizes: emoji:wink[lg] emoji:rocket[3x] emoji:bear[42px]
+
 == Mermaid
 
 [mermaid]

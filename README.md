@@ -8,6 +8,7 @@ AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoc
 - Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Preview updates from the unsaved editor buffer.
 - Local MathJax rendering for AsciiDoc stem and `latexmath` expressions.
+- Local emoji inline macro rendering for `emoji:name[]` syntax.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
 - Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
 - Local JavaScript-based Kroki-compatible rendering for `[nomnoml]`, `[vega]`, `[vegalite]`, `[wavedrom]`, and `[bytefield]` blocks.
@@ -26,6 +27,7 @@ The preview path is designed to avoid external network access:
 - Remote image URLs are replaced with an empty local data image before rendering.
 - Preview CSS is loaded from the bundled `media/antora-default-preview.css` file, not from the Antora site, GitLab, or a CDN.
 - Webview scripts are limited to extension-local resources and nonce-protected inline bootstrap code.
+- Emoji macros render as local Unicode text, not remote Twemoji SVG images.
 - MathJax is loaded from the bundled `media/mathjax/tex-chtml.js` file with bundled local fonts, not a CDN.
 - Mermaid is loaded from the bundled `media/mermaid.min.js` file, not a CDN or Kroki server.
 - PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
@@ -33,6 +35,7 @@ The preview path is designed to avoid external network access:
 
 The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
 Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE` and `media/mathjax-newcm/LICENSE`.
+The emoji name map is generated from `asciidoctor-emoji` and keeps its MIT license copy in `licenses/asciidoctor-emoji-LICENSE`.
 
 ## MathJax
 
@@ -48,6 +51,16 @@ latexmath:[E = mc^2]
 ```
 
 The preview renders these locally with MathJax. The preview enables `stem=latexmath` during conversion, so a document-level `:stem:` attribute is optional for the preview.
+
+## Emoji
+
+Use the `asciidoctor-emoji` compatible inline macro syntax:
+
+```asciidoc
+I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
+```
+
+Supported sizes are `1x`, `lg`, `2x`, `3x`, `4x`, `5x`, and explicit pixel sizes such as `42px`. The preview uses the emoji name map from `asciidoctor-emoji`, but renders Unicode emoji locally instead of loading Twemoji SVG files from a CDN.
 
 ## Mermaid
 
