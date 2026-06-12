@@ -7,6 +7,7 @@ AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoc
 - Live AsciiDoc preview rendered locally with Asciidoctor.js.
 - Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Preview updates from the unsaved editor buffer.
+- Local MathJax rendering for AsciiDoc stem and `latexmath` expressions.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
 - Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
 - Basic editing commands for bold, italic, monospace, links, section headings, and unordered lists.
@@ -24,10 +25,27 @@ The preview path is designed to avoid external network access:
 - Remote image URLs are replaced with an empty local data image before rendering.
 - Preview CSS is loaded from the bundled `media/antora-default-preview.css` file, not from the Antora site, GitLab, or a CDN.
 - Webview scripts are limited to extension-local resources and nonce-protected inline bootstrap code.
+- MathJax is loaded from the bundled `media/mathjax/tex-chtml.js` file with bundled local fonts, not a CDN.
 - Mermaid is loaded from the bundled `media/mermaid.min.js` file, not a CDN or Kroki server.
 - PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
 
 The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
+Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE` and `media/mathjax-newcm/LICENSE`.
+
+## MathJax
+
+Use AsciiDoc stem or `latexmath` syntax:
+
+```asciidoc
+latexmath:[E = mc^2]
+
+[stem]
+++++
+\frac{1}{2}
+++++
+```
+
+The preview renders these locally with MathJax. The preview enables `stem=latexmath` during conversion, so a document-level `:stem:` attribute is optional for the preview.
 
 ## Mermaid
 

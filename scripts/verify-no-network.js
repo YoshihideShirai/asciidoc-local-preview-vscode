@@ -88,6 +88,28 @@ const vendoredFiles = [
 		],
 	},
 	{
+		file: 'media/mathjax/tex-chtml.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/mathjax-newcm/chtml.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
 		file: 'media/plantuml.js',
 		patterns: [
 			/\bfetch\s*\(/,

@@ -195,6 +195,9 @@ class AsciiDocPreviewPanel {
 		const cspSource = this.panel.webview.cspSource;
 		const antoraPreviewStyleUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'antora-default-preview.css'));
 		const mermaidScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mermaid.min.js'));
+		const mathJaxBaseUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mathjax'));
+		const mathJaxScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mathjax', 'tex-chtml.js'));
+		const mathJaxFontBaseUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mathjax-newcm'));
 		const plantUmlScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'plantuml.js'));
 		const plantUmlVizScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'viz-global.js'));
 
@@ -202,7 +205,7 @@ class AsciiDocPreviewPanel {
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; font-src ${cspSource}; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
 	<link rel="stylesheet" href="${antoraPreviewStyleUri}">
@@ -257,6 +260,11 @@ class AsciiDocPreviewPanel {
 			white-space: pre-wrap;
 			color: var(--vscode-error-color);
 		}
+
+		.mathjax-error {
+			white-space: pre-wrap;
+			color: var(--vscode-error-color);
+		}
 	</style>
 </head>
 <body>
@@ -299,6 +307,36 @@ class AsciiDocPreviewPanel {
 		})();
 	</script>
 	<script nonce="${nonce}" src="${mermaidScriptUri}"></script>
+	<script nonce="${nonce}">
+		window.MathJax = {
+			tex: {
+				inlineMath: [['\\\\(', '\\\\)']],
+				displayMath: [['\\\\[', '\\\\]']],
+				processEscapes: true
+			},
+			loader: {
+				paths: {
+					mathjax: '${mathJaxBaseUri}',
+					'mathjax-newcm': '${mathJaxFontBaseUri}'
+				}
+			},
+			startup: {
+				typeset: false
+			}
+		};
+	</script>
+	<script nonce="${nonce}" id="MathJax-script" src="${mathJaxScriptUri}"></script>
+	<script nonce="${nonce}">
+		MathJax.startup.promise
+			.then(() => MathJax.typesetPromise([document.querySelector('.asciidoc-preview')]))
+			.catch((error) => {
+				const message = String(error && error.message ? error.message : error);
+				const container = document.createElement('pre');
+				container.className = 'mathjax-error';
+				container.textContent = message;
+				document.querySelector('.asciidoc-preview')?.prepend(container);
+			});
+	</script>
 	<script nonce="${nonce}" src="${plantUmlVizScriptUri}"></script>
 	<script nonce="${nonce}">
 		(async () => {
@@ -361,6 +399,7 @@ function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview)
 				showtitle: true,
 				sectanchors: true,
 				icons: 'font',
+				stem: 'latexmath',
 				'allow-uri-read': false,
 			},
 			extension_registry: asciidoctorExtensions,
