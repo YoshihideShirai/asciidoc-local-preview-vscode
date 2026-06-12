@@ -130,7 +130,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "verify:no-network": "node scripts/verify-no-network.js",
+    "pretest": "npm run compile && npm run lint && npm run verify:no-network",
     "lint": "eslint src",
     "test": "vscode-test"
   },

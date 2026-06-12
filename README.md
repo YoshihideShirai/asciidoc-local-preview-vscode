@@ -1,71 +1,40 @@
-# asciidoc-all-in-one README
+# AsciiDoc All in One
 
-This is the README for your extension "asciidoc-all-in-one". After writing up a brief description, we recommend including the following sections.
+AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoctor.js.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Live AsciiDoc preview rendered locally with Asciidoctor.js.
+- Preview updates from the unsaved editor buffer.
+- Basic editing commands for bold, italic, monospace, links, section headings, and unordered lists.
+- Snippets for document headers, source blocks, admonitions, and tables.
 
-For example if there is an image subfolder under your extension project workspace:
+## Privacy Boundary
 
-\!\[feature X\]\(images/feature-x.png\)
+This extension is intended to preview and edit local documentation without sending document contents to the internet.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+The preview path is designed to avoid external network access:
 
-## Requirements
+- Asciidoctor.js runs inside the extension host.
+- `allow-uri-read` is explicitly disabled.
+- The Webview CSP uses `default-src 'none'`.
+- Remote image URLs are replaced with an empty local data image before rendering.
+- Webview scripts are disabled.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+Run the no-network verification phase before publishing or accepting AI-generated changes:
 
-## Extension Settings
+```sh
+npm run verify:no-network
+```
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This check scans extension-controlled code for browser network APIs, Node network modules, process execution APIs, remote URL literals, remote-loading Webview CSP rules, unsafe Asciidoctor mode, and unapproved runtime dependencies. It also runs automatically before `npm test`.
 
-For example:
+## Development
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+```sh
+npm install
+npm run compile
+npm run lint
+npm run verify:no-network
+npm test
+```

@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleBold', (editor) => wrapSelection(editor, '*', '*', 'strong text')),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleItalic', (editor) => wrapSelection(editor, '_', '_', 'emphasized text')),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleMonospace', (editor) => wrapSelection(editor, '`', '`', 'monospace text')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertLink', (editor) => wrapSelection(editor, 'link:https://example.com[', ']', 'link text')),
+		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertLink', (editor) => wrapSelection(editor, 'link:./path/to/document.adoc[', ']', 'link text')),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertHeading', (editor) => prefixSelectionLines(editor, '== ')),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertUnorderedList', (editor) => prefixSelectionLines(editor, '* ')),
 		vscode.workspace.onDidChangeTextDocument((event) => {
@@ -131,7 +131,7 @@ class AsciiDocPreviewPanel {
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; style-src ${cspSource} 'unsafe-inline';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
 	<style>
@@ -288,7 +288,11 @@ function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webv
 	}
 
 	return html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_match: string, before: string, src: string, after: string) => {
-		if (/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(src)) {
+		if (/^(?:https?:|ftp:|\/\/)/i.test(src)) {
+			return `${before}${blockedImageUri()}${after}`;
+		}
+
+		if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(src)) {
 			return `${before}${src}${after}`;
 		}
 
@@ -298,6 +302,10 @@ function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webv
 
 		return `${before}${webviewUri.toString()}${parsed.suffix}${after}`;
 	});
+}
+
+function blockedImageUri(): string {
+	return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 }
 
 function splitUriSuffix(value: string): { path: string; suffix: string } {
