@@ -14,14 +14,14 @@ export function activate(context: vscode.ExtensionContext) {
 	registerDiagramProcessors();
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('asciidoc-all-in-one.openPreview', () => openPreview(context.extensionUri)),
-		vscode.commands.registerCommand('asciidoc-all-in-one.refreshPreview', () => refreshVisiblePreviews()),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleBold', (editor) => wrapSelection(editor, '*', '*', 'strong text')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleItalic', (editor) => wrapSelection(editor, '_', '_', 'emphasized text')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleMonospace', (editor) => wrapSelection(editor, '`', '`', 'monospace text')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertLink', (editor) => wrapSelection(editor, 'link:./path/to/document.adoc[', ']', 'link text')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertHeading', (editor) => prefixSelectionLines(editor, '== ')),
-		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.insertUnorderedList', (editor) => prefixSelectionLines(editor, '* ')),
+		vscode.commands.registerCommand('asciidoc-local-preview.openPreview', () => openPreview(context.extensionUri)),
+		vscode.commands.registerCommand('asciidoc-local-preview.refreshPreview', () => refreshVisiblePreviews()),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.toggleBold', (editor) => wrapSelection(editor, '*', '*', 'strong text')),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.toggleItalic', (editor) => wrapSelection(editor, '_', '_', 'emphasized text')),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.toggleMonospace', (editor) => wrapSelection(editor, '`', '`', 'monospace text')),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertLink', (editor) => wrapSelection(editor, 'link:./path/to/document.adoc[', ']', 'link text')),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertHeading', (editor) => prefixSelectionLines(editor, '== ')),
+		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertUnorderedList', (editor) => prefixSelectionLines(editor, '* ')),
 		vscode.workspace.onDidChangeTextDocument((event) => {
 			const panel = previewPanels.get(event.document.uri.toString());
 			panel?.update(event.document);
@@ -156,7 +156,7 @@ class AsciiDocPreviewPanel {
 		this.document = document;
 		this.documentUri = document.uri;
 		this.panel = vscode.window.createWebviewPanel(
-			'asciidocAllInOnePreview',
+			'asciidocLocalPreview',
 			`Preview: ${getDocumentTitle(document)}`,
 			vscode.ViewColumn.Beside,
 			{

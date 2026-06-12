@@ -2,7 +2,7 @@
 :toc:
 :sectanchors:
 
-This file exercises the local preview features in AsciiDoc All in One.
+This file exercises the local preview features in AsciiDoc Local Preview.
 
 == Basic AsciiDoc
 

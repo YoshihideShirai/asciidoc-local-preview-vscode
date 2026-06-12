@@ -1,7 +1,7 @@
 {
-  "name": "asciidoc-all-in-one",
-  "displayName": "AsciiDoc All in One",
-  "description": "AsciiDoc editing and preview support powered by Asciidoctor.js.",
+  "name": "asciidoc-local-preview",
+  "displayName": "AsciiDoc Local Preview",
+  "description": "Local AsciiDoc preview for VS Code with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.120.0"
@@ -12,7 +12,7 @@
   ],
   "activationEvents": [
     "onLanguage:asciidoc",
-    "onCommand:asciidoc-all-in-one.openPreview"
+    "onCommand:asciidoc-local-preview.openPreview"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -33,42 +33,42 @@
     ],
     "commands": [
       {
-        "command": "asciidoc-all-in-one.openPreview",
-        "title": "Open AsciiDoc Preview",
+        "command": "asciidoc-local-preview.openPreview",
+        "title": "Open Local AsciiDoc Preview",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.refreshPreview",
+        "command": "asciidoc-local-preview.refreshPreview",
         "title": "Refresh Preview",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.toggleBold",
+        "command": "asciidoc-local-preview.toggleBold",
         "title": "Bold",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.toggleItalic",
+        "command": "asciidoc-local-preview.toggleItalic",
         "title": "Italic",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.toggleMonospace",
+        "command": "asciidoc-local-preview.toggleMonospace",
         "title": "Monospace",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.insertLink",
+        "command": "asciidoc-local-preview.insertLink",
         "title": "Insert Link",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.insertHeading",
+        "command": "asciidoc-local-preview.insertHeading",
         "title": "Insert Section Heading",
         "category": "AsciiDoc"
       },
       {
-        "command": "asciidoc-all-in-one.insertUnorderedList",
+        "command": "asciidoc-local-preview.insertUnorderedList",
         "title": "Insert Unordered List",
         "category": "AsciiDoc"
       }
@@ -76,44 +76,44 @@
     "menus": {
       "editor/title": [
         {
-          "command": "asciidoc-all-in-one.openPreview",
+          "command": "asciidoc-local-preview.openPreview",
           "when": "resourceLangId == asciidoc",
           "group": "navigation"
         }
       ],
       "editor/context": [
         {
-          "command": "asciidoc-all-in-one.openPreview",
+          "command": "asciidoc-local-preview.openPreview",
           "when": "resourceLangId == asciidoc",
           "group": "navigation"
         },
         {
-          "command": "asciidoc-all-in-one.toggleBold",
+          "command": "asciidoc-local-preview.toggleBold",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         },
         {
-          "command": "asciidoc-all-in-one.toggleItalic",
+          "command": "asciidoc-local-preview.toggleItalic",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         },
         {
-          "command": "asciidoc-all-in-one.toggleMonospace",
+          "command": "asciidoc-local-preview.toggleMonospace",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         },
         {
-          "command": "asciidoc-all-in-one.insertLink",
+          "command": "asciidoc-local-preview.insertLink",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         },
         {
-          "command": "asciidoc-all-in-one.insertHeading",
+          "command": "asciidoc-local-preview.insertHeading",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         },
         {
-          "command": "asciidoc-all-in-one.insertUnorderedList",
+          "command": "asciidoc-local-preview.insertUnorderedList",
           "when": "editorLangId == asciidoc",
           "group": "1_modification"
         }

@@ -1,23 +1,32 @@
-# AsciiDoc All in One
+# AsciiDoc Local Preview
 
-AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoctor.js.
+Local AsciiDoc preview for Visual Studio Code, powered by Asciidoctor.js and bundled rendering assets.
+
+AsciiDoc Local Preview is built for documentation projects that should stay on your machine. It renders the active editor buffer in a VS Code Webview, supports common authoring commands, and keeps math, emoji, and diagram rendering inside the extension instead of calling external services.
 
 ## Features
 
 - Live AsciiDoc preview rendered locally with Asciidoctor.js.
-- Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Preview updates from the unsaved editor buffer.
+- Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Local MathJax rendering for AsciiDoc stem and `latexmath` expressions.
 - Local emoji inline macro rendering for `emoji:name[]` syntax.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
 - Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
 - Local JavaScript-based Kroki-compatible rendering for `[nomnoml]`, `[vega]`, `[vegalite]`, `[wavedrom]`, and `[bytefield]` blocks.
+- Local file macros for supported diagram types, restricted to paths inside the document directory.
 - Basic editing commands for bold, italic, monospace, links, section headings, and unordered lists.
 - Snippets for document headers, source blocks, admonitions, and tables.
 
+## Usage
+
+Open an `.adoc`, `.asciidoc`, or `.asc` file, then run **AsciiDoc: Open Local AsciiDoc Preview** from the Command Palette or the editor title menu.
+
+The preview follows changes in the unsaved editor buffer. If a Webview needs to be redrawn manually, run **AsciiDoc: Refresh Preview**.
+
 ## Privacy Boundary
 
-This extension is intended to preview and edit local documentation without sending document contents to the internet.
+AsciiDoc Local Preview is intended to preview and edit local documentation without sending document contents to the internet.
 
 The preview path is designed to avoid external network access:
 
@@ -33,9 +42,13 @@ The preview path is designed to avoid external network access:
 - PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
 - Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield are loaded from bundled `media` files, not a CDN or Kroki server.
 
-The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
-Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE` and `media/mathjax-newcm/LICENSE`.
-The emoji name map is generated from `asciidoctor-emoji` and keeps its MIT license copy in `licenses/asciidoctor-emoji-LICENSE`.
+Run the no-network verification phase before publishing or accepting generated changes:
+
+```sh
+npm run verify:no-network
+```
+
+This check scans extension-controlled code for browser network APIs, Node network modules, process execution APIs, remote URL literals, remote-loading Webview CSP rules, unsafe Asciidoctor mode, and unapproved runtime dependencies. It also runs automatically before `npm test`.
 
 ## MathJax
 
@@ -50,7 +63,7 @@ latexmath:[E = mc^2]
 ++++
 ```
 
-The preview renders these locally with MathJax. The preview enables `stem=latexmath` during conversion, so a document-level `:stem:` attribute is optional for the preview.
+The preview renders these locally with MathJax. The preview enables `stem=latexmath` during conversion, so a document-level `:stem:` attribute is optional for preview rendering.
 
 ## Emoji
 
@@ -85,7 +98,7 @@ mermaid::diagrams/system.mmd[]
 
 Macro targets must be relative local paths inside the document directory. Remote URLs, absolute paths, and paths outside the document directory are rejected in the preview.
 
-`[source,mermaid]` blocks are also rendered for compatibility with the first implementation.
+`[source,mermaid]` blocks are also rendered for compatibility with earlier documents.
 
 ## PlantUML
 
@@ -145,13 +158,13 @@ The preview also supports local JavaScript renderers for Kroki-compatible Nomnom
 
 Both listing (`----`) and literal (`....`) block delimiters are supported. Local file macros such as `nomnoml::diagrams/model.nomnoml[]`, `vega::charts/spec.json[]`, `vegalite::charts/spec.vl.json[]`, `wavedrom::waves/timing.json5[]`, and `bytefield::registers/status.json[]` are also supported with the same local-path restrictions as Mermaid and PlantUML. `[source,nomnoml]`, `[source,vega]`, `[source,vegalite]`, `[source,wavedrom]`, and `[source,bytefield]` blocks are rendered as diagrams for compatibility.
 
-Run the no-network verification phase before publishing or accepting AI-generated changes:
+## Bundled Licenses
 
-```sh
-npm run verify:no-network
-```
+The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
 
-This check scans extension-controlled code for browser network APIs, Node network modules, process execution APIs, remote URL literals, remote-loading Webview CSP rules, unsafe Asciidoctor mode, and unapproved runtime dependencies. It also runs automatically before `npm test`.
+Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE` and `media/mathjax-newcm/LICENSE`.
+
+The emoji name map is generated from `asciidoctor-emoji` and keeps its MIT license copy in `licenses/asciidoctor-emoji-LICENSE`.
 
 ## Development
 
