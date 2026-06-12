@@ -241,6 +241,10 @@ for (const file of listFiles(scanTargets)) {
 
 	for (const [index, line] of lines.entries()) {
 		for (const blocked of blockedPatterns) {
+			if (isAllowedPackageMetadataUrl(rel, blocked.name, line)) {
+				continue;
+			}
+
 			if (blocked.pattern.test(line)) {
 				failures.push(`${rel}:${index + 1}: ${blocked.name}: ${line.trim()}`);
 			}
@@ -307,6 +311,12 @@ function verifyRuntimeDependencies() {
 			failures.push(`package.json: runtime dependency "${dependency}" is not in the no-network allowlist.`);
 		}
 	}
+}
+
+function isAllowedPackageMetadataUrl(rel, blockedName, line) {
+	return rel === 'package.json'
+		&& blockedName === 'remote URL literal in extension-controlled code'
+		&& /"url"\s*:\s*"https:\/\/github\.com\/YoshihideShirai\/asciidoc-local-preview-vscode\.git"/.test(line);
 }
 
 function verifyVendoredFiles() {

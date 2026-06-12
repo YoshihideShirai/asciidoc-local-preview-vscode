@@ -5,6 +5,10 @@
   "version": "0.0.1",
   "license": "MIT",
   "icon": "media/extension-icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YoshihideShirai/asciidoc-local-preview-vscode.git"
+  },
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -134,11 +138,12 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run compile && npm run bundle",
+    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "verify:no-network": "node scripts/verify-no-network.js",
-    "pretest": "npm run compile && npm run lint && npm run verify:no-network",
+    "pretest": "npm run compile && npm run bundle && npm run lint && npm run verify:no-network",
     "lint": "eslint src",
     "test": "vscode-test"
   },
