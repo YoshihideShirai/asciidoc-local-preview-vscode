@@ -21,6 +21,21 @@ AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc
 - Includes snippets for document headers, source blocks, admonitions, and tables.
 - Keeps the preview path independent of CDNs, Kroki servers, and remote image loading.
 
+
+## Differentiators
+
+AsciiDoc Local Preview is narrower than `asciidoctor/asciidoctor-vscode`: it focuses on safe local preview.
+
+| Area | AsciiDoc Local Preview | `asciidoctor/asciidoctor-vscode` |
+| --- | --- | --- |
+| Focus | Local preview | Full AsciiDoc authoring |
+| Diagrams | Bundled local renderers | Broad Kroki support |
+| External send | Avoided by default | Used with Kroki |
+| PlantUML | No Java / Graphviz | Via Kroki |
+| Math / emoji | Bundled MathJax / emoji | Extensions available |
+| Export | None | PDF / HTML / DocBook |
+| Best for | Confidential or offline checks | Conversion and publishing |
+
 ## Getting Started
 
 1. Open an AsciiDoc file in VS Code.
