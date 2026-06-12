@@ -73,10 +73,74 @@ sequenceDiagram
 
 == PlantUML
 
+.Sequence diagram
 [plantuml]
 ....
 Alice -> Bob : Hello
 Bob --> Alice : Rendered locally
+....
+
+.Class diagram
+[plantuml]
+....
+class PreviewDocument {
+  +render()
+  +refresh()
+}
+
+class DiagramRenderer {
+  +renderPlantUml(source)
+}
+
+PreviewDocument --> DiagramRenderer : delegates
+....
+
+.Use case diagram
+[plantuml]
+....
+left to right direction
+actor User
+rectangle "AsciiDoc Preview" {
+  User --> (Open preview)
+  User --> (Refresh diagrams)
+  (Open preview) --> (Render PlantUML)
+}
+....
+
+.Activity diagram
+[plantuml]
+....
+start
+:Read AsciiDoc document;
+if (PlantUML block?) then (yes)
+  :Normalize source;
+  :Render locally;
+else (no)
+  :Keep source block;
+endif
+stop
+....
+
+.State diagram
+[plantuml]
+....
+[*] --> Idle
+Idle --> Rendering : preview opened
+Rendering --> Ready : SVG generated
+Rendering --> Error : renderer failed
+Ready --> Rendering : document changed
+Error --> Rendering : retry
+....
+
+.Component diagram
+[plantuml]
+....
+package "VS Code Webview" {
+  [Preview Panel] --> [PlantUML Renderer]
+}
+
+[AsciiDoc Extension] --> [Preview Panel] : posts HTML
+[PlantUML Renderer] --> [Bundled PlantUML JS]
 ....
 
 == Nomnoml
@@ -96,7 +160,7 @@ Bob --> Alice : Rendered locally
   "data": {
     "values": [
       {"category": "Mermaid", "count": 3},
-      {"category": "PlantUML", "count": 2},
+      {"category": "PlantUML", "count": 6},
       {"category": "Vega-Lite", "count": 4}
     ]
   },

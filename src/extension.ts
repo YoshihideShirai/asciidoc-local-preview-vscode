@@ -549,7 +549,7 @@ class AsciiDocPreviewPanel {
 		});
 		let plantUmlRendered = 0;
 		let plantUmlFailed = 0;
-		for (const diagram of document.querySelectorAll('.plantuml-diagram')) {
+		const renderPlantUmlDiagram = (diagram) => new Promise((resolve) => {
 			const source = diagram.querySelector('.plantuml-source');
 			const output = diagram.querySelector('.plantuml-output');
 			if (!source || !output) {
@@ -557,34 +557,56 @@ class AsciiDocPreviewPanel {
 					hasSource: Boolean(source),
 					hasOutput: Boolean(output)
 				});
-				continue;
+				resolve();
+				return;
 			}
 
-			renderToString(
-				source.textContent.split(/\\r\\n|\\r|\\n/),
-				(svg) => {
-					plantUmlRendered += 1;
-					output.innerHTML = svg;
-					tracePreview('plantuml.rendered', {
-						rendered: plantUmlRendered,
-						failed: plantUmlFailed,
-						svgLength: svg.length
-					});
-				},
-				(message) => {
-					plantUmlFailed += 1;
-					tracePreview('plantuml.error', {
-						rendered: plantUmlRendered,
-						failed: plantUmlFailed,
-						message: String(message || 'PlantUML rendering failed')
-					});
-					output.classList.add('plantuml-error');
-					output.textContent = String(message || 'PlantUML rendering failed');
-				},
-			);
+			try {
+				renderToString(
+					(source.textContent || '').split(/\\r\\n|\\r|\\n/),
+					(svg) => {
+						plantUmlRendered += 1;
+						output.innerHTML = svg;
+						tracePreview('plantuml.rendered', {
+							rendered: plantUmlRendered,
+							failed: plantUmlFailed,
+							svgLength: svg.length
+						});
+						resolve();
+					},
+					(message) => {
+						plantUmlFailed += 1;
+						tracePreview('plantuml.error', {
+							rendered: plantUmlRendered,
+							failed: plantUmlFailed,
+							message: String(message || 'PlantUML rendering failed')
+						});
+						output.classList.add('plantuml-error');
+						output.textContent = String(message || 'PlantUML rendering failed');
+						resolve();
+					},
+				);
+			} catch (error) {
+				plantUmlFailed += 1;
+				const message = String(error && error.message ? error.message : error);
+				tracePreview('plantuml.error', {
+					rendered: plantUmlRendered,
+					failed: plantUmlFailed,
+					message
+				});
+				output.classList.add('plantuml-error');
+				output.textContent = message;
+				resolve();
+			}
+		});
+
+		for (const diagram of document.querySelectorAll('.plantuml-diagram')) {
+			await renderPlantUmlDiagram(diagram);
 		}
-		tracePreview('plantuml.queued', {
-			nodes: document.querySelectorAll('.plantuml-diagram').length
+		tracePreview('plantuml.done', {
+			nodes: document.querySelectorAll('.plantuml-diagram').length,
+			rendered: plantUmlRendered,
+			failed: plantUmlFailed
 		});
 	</script>
 	<script nonce="${nonce}">
