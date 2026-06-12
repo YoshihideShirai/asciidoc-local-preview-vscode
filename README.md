@@ -1,13 +1,20 @@
 # AsciiDoc Local Preview
 
-Local AsciiDoc preview for Visual Studio Code, powered by Asciidoctor.js and bundled rendering assets.
+AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc files locally.
 
-AsciiDoc Local Preview is built for documentation projects that should stay on your machine. It renders the active editor buffer in a VS Code Webview, supports common authoring commands, and keeps math, emoji, and diagram rendering inside the extension instead of calling external services.
+It is built for documentation projects that should stay on your machine. The extension renders the active editor buffer in a VS Code Webview, supports common AsciiDoc authoring commands, and keeps math, emoji, and diagram rendering inside VS Code instead of calling external services.
+
+## What This Extension Does
+
+- Adds AsciiDoc language support for `.adoc`, `.asciidoc`, and `.asc` files in VS Code.
+- Opens a local preview beside the active AsciiDoc editor.
+- Provides editor commands and snippets for common AsciiDoc authoring tasks.
+- Bundles its renderer assets so previewing does not depend on CDN or Kroki server access.
 
 ## Features
 
-- Live AsciiDoc preview rendered locally with Asciidoctor.js.
-- Preview updates from the unsaved editor buffer.
+- Live AsciiDoc preview inside VS Code, rendered locally with Asciidoctor.js.
+- Preview updates from the unsaved VS Code editor buffer.
 - Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Local MathJax rendering for AsciiDoc stem and `latexmath` expressions.
 - Local emoji inline macro rendering for `emoji:name[]` syntax.
@@ -20,7 +27,7 @@ AsciiDoc Local Preview is built for documentation projects that should stay on y
 
 ## Usage
 
-Open an `.adoc`, `.asciidoc`, or `.asc` file, then run **AsciiDoc: Open Local AsciiDoc Preview** from the Command Palette or the editor title menu.
+Install and enable the extension in Visual Studio Code. Open an `.adoc`, `.asciidoc`, or `.asc` file, then run **AsciiDoc: Open Local AsciiDoc Preview** from the Command Palette or the editor title menu.
 
 The preview follows changes in the unsaved editor buffer. If a Webview needs to be redrawn manually, run **AsciiDoc: Refresh Preview**.
 
