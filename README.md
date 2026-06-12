@@ -173,7 +173,7 @@ Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE`
 
 The emoji name map is generated from `asciidoctor-emoji` and keeps its MIT license copy in `licenses/asciidoctor-emoji-LICENSE`.
 
-The AsciiDoc file icon is adapted from the `vscode-icons` project and keeps its MIT license copy in `licenses/vscode-icons-LICENSE`.
+The AsciiDoc file and extension icons are adapted from the `vscode-icons` project and keep its MIT license copy in `licenses/vscode-icons-LICENSE`.
 
 ## Development
 
