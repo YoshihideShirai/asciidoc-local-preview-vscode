@@ -193,6 +193,7 @@ class AsciiDocPreviewPanel {
 		const body = convertAsciiDoc(document, this.panel.webview);
 		const nonce = getNonce();
 		const cspSource = this.panel.webview.cspSource;
+		const antoraPreviewStyleUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'antora-default-preview.css'));
 		const mermaidScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mermaid.min.js'));
 		const plantUmlScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'plantuml.js'));
 		const plantUmlVizScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'viz-global.js'));
@@ -204,69 +205,11 @@ class AsciiDocPreviewPanel {
 	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
+	<link rel="stylesheet" href="${antoraPreviewStyleUri}">
 	<style>
 		:root {
-			color-scheme: light dark;
-			--body-bg: var(--vscode-editor-background);
-			--body-fg: var(--vscode-editor-foreground);
-			--muted-fg: var(--vscode-descriptionForeground);
 			--border: var(--vscode-panel-border);
-			--accent: var(--vscode-textLink-foreground);
-			--code-bg: var(--vscode-textCodeBlock-background);
-		}
-
-		body {
-			margin: 0;
-			background: var(--body-bg);
-			color: var(--body-fg);
-			font: 14px/1.65 var(--vscode-font-family);
-		}
-
-		main {
-			box-sizing: border-box;
-			width: min(960px, 100%);
-			margin: 0 auto;
-			padding: 28px 32px 56px;
-		}
-
-		h1, h2, h3, h4, h5, h6 {
-			line-height: 1.25;
-			margin: 1.55em 0 0.55em;
-		}
-
-		h1:first-child, h2:first-child {
-			margin-top: 0;
-		}
-
-		a {
-			color: var(--accent);
-		}
-
-		p, ul, ol, dl, table, pre, blockquote {
-			margin: 0 0 1rem;
-		}
-
-		pre, code {
-			font-family: var(--vscode-editor-font-family);
-		}
-
-		pre {
-			overflow: auto;
-			padding: 14px 16px;
-			border: 1px solid var(--border);
-			border-radius: 6px;
-			background: var(--code-bg);
-		}
-
-		code {
-			background: var(--code-bg);
-			border-radius: 3px;
-			padding: 0.1em 0.25em;
-		}
-
-		pre code {
-			padding: 0;
-			background: transparent;
+			--vscode-error-color: var(--vscode-errorForeground);
 		}
 
 		.mermaid-diagram {
@@ -275,7 +218,7 @@ class AsciiDocPreviewPanel {
 			padding: 16px;
 			border: 1px solid var(--border);
 			border-radius: 6px;
-			background: var(--vscode-editor-background);
+			background: var(--pre-background);
 		}
 
 		.plantuml-diagram {
@@ -284,7 +227,7 @@ class AsciiDocPreviewPanel {
 			padding: 16px;
 			border: 1px solid var(--border);
 			border-radius: 6px;
-			background: var(--vscode-editor-background);
+			background: var(--pre-background);
 		}
 
 		.mermaid-diagram svg {
@@ -307,47 +250,20 @@ class AsciiDocPreviewPanel {
 
 		.mermaid-error {
 			white-space: pre-wrap;
-			color: var(--vscode-errorForeground);
+			color: var(--vscode-error-color);
 		}
 
 		.plantuml-error {
 			white-space: pre-wrap;
-			color: var(--vscode-errorForeground);
-		}
-
-		blockquote {
-			border-left: 3px solid var(--border);
-			color: var(--muted-fg);
-			padding-left: 1rem;
-		}
-
-		table {
-			border-collapse: collapse;
-			width: 100%;
-		}
-
-		th, td {
-			border: 1px solid var(--border);
-			padding: 6px 10px;
-			vertical-align: top;
-		}
-
-		img {
-			max-width: 100%;
-			height: auto;
-		}
-
-		.admonitionblock td.icon {
-			width: 1%;
-			white-space: nowrap;
-			color: var(--accent);
-			font-weight: 600;
+			color: var(--vscode-error-color);
 		}
 	</style>
 </head>
 <body>
-	<main class="asciidoc-preview">
+	<main>
+	<article class="doc asciidoc-preview">
 		${body}
+	</article>
 	</main>
 	<script nonce="${nonce}">
 		(() => {

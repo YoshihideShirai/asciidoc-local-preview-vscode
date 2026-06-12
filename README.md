@@ -5,6 +5,7 @@ AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoc
 ## Features
 
 - Live AsciiDoc preview rendered locally with Asciidoctor.js.
+- Preview styling adapted from the Antora Default UI and loaded from bundled extension assets.
 - Preview updates from the unsaved editor buffer.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
 - Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
@@ -21,9 +22,12 @@ The preview path is designed to avoid external network access:
 - `allow-uri-read` is explicitly disabled.
 - The Webview CSP uses `default-src 'none'`.
 - Remote image URLs are replaced with an empty local data image before rendering.
+- Preview CSS is loaded from the bundled `media/antora-default-preview.css` file, not from the Antora site, GitLab, or a CDN.
 - Webview scripts are limited to extension-local resources and nonce-protected inline bootstrap code.
 - Mermaid is loaded from the bundled `media/mermaid.min.js` file, not a CDN or Kroki server.
 - PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
+
+The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
 
 ## Mermaid
 
