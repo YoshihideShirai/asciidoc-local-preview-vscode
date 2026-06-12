@@ -1,13 +1,18 @@
 import asciidoctorFactory from 'asciidoctor';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
 const asciidoctor = asciidoctorFactory();
+const asciidoctorExtensions = asciidoctor.Extensions.create();
 const previewPanels = new Map<string, AsciiDocPreviewPanel>();
+let diagramProcessorsRegistered = false;
 
 export function activate(context: vscode.ExtensionContext) {
+	registerDiagramProcessors();
+
 	context.subscriptions.push(
-		vscode.commands.registerCommand('asciidoc-all-in-one.openPreview', () => openPreview()),
+		vscode.commands.registerCommand('asciidoc-all-in-one.openPreview', () => openPreview(context.extensionUri)),
 		vscode.commands.registerCommand('asciidoc-all-in-one.refreshPreview', () => refreshVisiblePreviews()),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleBold', (editor) => wrapSelection(editor, '*', '*', 'strong text')),
 		vscode.commands.registerTextEditorCommand('asciidoc-all-in-one.toggleItalic', (editor) => wrapSelection(editor, '_', '_', 'emphasized text')),
@@ -22,6 +27,60 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
+function registerDiagramProcessors() {
+	if (diagramProcessorsRegistered) {
+		return;
+	}
+
+	diagramProcessorsRegistered = true;
+
+	asciidoctorExtensions.preprocessor(function () {
+		this.process(function (_document, reader) {
+			return reader.pushInclude(rewriteMermaidLiteralBlockStyles(reader.readLines()));
+		});
+	});
+
+	asciidoctorExtensions.block('mermaid', function () {
+		this.onContext('listing');
+		this.process(function (parent, reader) {
+			const source = reader.getLines().join('\n');
+
+			return this.createBlock(parent, 'pass', renderMermaidBlock(source));
+		});
+	});
+
+	asciidoctorExtensions.block('mermaidliteral', function () {
+		this.onContext('literal');
+		this.process(function (parent, reader) {
+			const source = reader.getLines().join('\n');
+
+			return this.createBlock(parent, 'pass', renderMermaidBlock(source));
+		});
+	});
+
+	asciidoctorExtensions.blockMacro('mermaid', function () {
+		this.process(function (parent, target) {
+			const source = readLocalDiagramSource(parent.getDocument().getBaseDir(), target);
+
+			return this.createBlock(parent, 'pass', source.ok
+				? renderMermaidBlock(source.value)
+				: renderDiagramError(source.value));
+		});
+	});
+}
+
+function rewriteMermaidLiteralBlockStyles(lines: string[]): string[] {
+	const rewritten = [...lines];
+
+	for (let index = 0; index < rewritten.length - 1; index += 1) {
+		if (/^\[mermaid(?=[,\]])/.test(rewritten[index].trim()) && rewritten[index + 1].trim() === '....') {
+			rewritten[index] = rewritten[index].replace('[mermaid', '[mermaidliteral');
+		}
+	}
+
+	return rewritten;
+}
+
 export function deactivate() {
 	for (const panel of previewPanels.values()) {
 		panel.dispose();
@@ -29,7 +88,7 @@ export function deactivate() {
 	previewPanels.clear();
 }
 
-function openPreview() {
+function openPreview(extensionUri: vscode.Uri) {
 	const document = getActiveAsciiDocDocument();
 	if (!document) {
 		vscode.window.showWarningMessage('Open an AsciiDoc file before starting the preview.');
@@ -44,7 +103,7 @@ function openPreview() {
 		return;
 	}
 
-	const panel = new AsciiDocPreviewPanel(document);
+	const panel = new AsciiDocPreviewPanel(extensionUri, document);
 	previewPanels.set(key, panel);
 }
 
@@ -74,7 +133,7 @@ class AsciiDocPreviewPanel {
 	private document: vscode.TextDocument;
 	private disposed = false;
 
-	constructor(document: vscode.TextDocument) {
+	constructor(private readonly extensionUri: vscode.Uri, document: vscode.TextDocument) {
 		this.document = document;
 		this.documentUri = document.uri;
 		this.panel = vscode.window.createWebviewPanel(
@@ -82,8 +141,9 @@ class AsciiDocPreviewPanel {
 			`Preview: ${getDocumentTitle(document)}`,
 			vscode.ViewColumn.Beside,
 			{
+				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: getLocalResourceRoots(document),
+				localResourceRoots: getLocalResourceRoots(this.extensionUri, document),
 			},
 		);
 
@@ -125,13 +185,15 @@ class AsciiDocPreviewPanel {
 
 	private render(document: vscode.TextDocument): string {
 		const body = convertAsciiDoc(document, this.panel.webview);
+		const nonce = getNonce();
 		const cspSource = this.panel.webview.cspSource;
+		const mermaidScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mermaid.min.js'));
 
 		return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
 	<style>
@@ -199,6 +261,27 @@ class AsciiDocPreviewPanel {
 			background: transparent;
 		}
 
+		.mermaid-diagram {
+			overflow: auto;
+			margin: 0 0 1rem;
+			padding: 16px;
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			background: var(--vscode-editor-background);
+		}
+
+		.mermaid-diagram svg {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			margin: 0 auto;
+		}
+
+		.mermaid-error {
+			white-space: pre-wrap;
+			color: var(--vscode-errorForeground);
+		}
+
 		blockquote {
 			border-left: 3px solid var(--border);
 			color: var(--muted-fg);
@@ -233,6 +316,63 @@ class AsciiDocPreviewPanel {
 	<main class="asciidoc-preview">
 		${body}
 	</main>
+	<script nonce="${nonce}">
+		(() => {
+			const block = (name) => () => {
+				throw new Error(name + ' is disabled in the AsciiDoc preview.');
+			};
+			const setBlockedGlobal = (name) => {
+				try {
+					Object.defineProperty(window, name, {
+						value: block(name),
+						configurable: false,
+						writable: false
+					});
+				} catch {
+					window[name] = block(name);
+				}
+			};
+
+			setBlockedGlobal('fetch');
+			setBlockedGlobal('XMLHttpRequest');
+			setBlockedGlobal('WebSocket');
+			setBlockedGlobal('EventSource');
+
+			try {
+				Object.defineProperty(navigator, 'sendBeacon', {
+					value: block('sendBeacon'),
+					configurable: false,
+					writable: false
+				});
+			} catch {
+				// Some Webview runtimes expose navigator methods as read-only.
+			}
+		})();
+	</script>
+	<script nonce="${nonce}" src="${mermaidScriptUri}"></script>
+	<script nonce="${nonce}">
+		(async () => {
+			const api = window.mermaid;
+			if (!api) {
+				return;
+			}
+
+			api.initialize({
+				startOnLoad: false,
+				securityLevel: 'strict',
+				theme: document.body.classList.contains('vscode-dark') ? 'dark' : 'default'
+			});
+
+			await api.run({
+				querySelector: '.mermaid'
+			});
+		})().catch((error) => {
+			for (const diagram of document.querySelectorAll('.mermaid')) {
+				diagram.classList.add('mermaid-error');
+				diagram.textContent = String(error && error.message ? error.message : error);
+			}
+		});
+	</script>
 </body>
 </html>`;
 	}
@@ -251,9 +391,10 @@ function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview)
 				icons: 'font',
 				'allow-uri-read': false,
 			},
+			extension_registry: asciidoctorExtensions,
 		});
 
-		return rewriteLocalImageUris(String(converted), document, webview);
+		return rewriteMermaidBlocks(rewriteLocalImageUris(String(converted), document, webview));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 
@@ -269,12 +410,12 @@ function getBaseDir(document: vscode.TextDocument): string | undefined {
 	return path.dirname(document.uri.fsPath);
 }
 
-function getLocalResourceRoots(document: vscode.TextDocument): vscode.Uri[] {
+function getLocalResourceRoots(extensionUri: vscode.Uri, document: vscode.TextDocument): vscode.Uri[] {
 	if (document.uri.scheme === 'file') {
-		return [vscode.Uri.file(path.dirname(document.uri.fsPath))];
+		return [extensionUri, vscode.Uri.file(path.dirname(document.uri.fsPath))];
 	}
 
-	return vscode.workspace.workspaceFolders?.map((folder) => folder.uri) ?? [];
+	return [extensionUri, ...(vscode.workspace.workspaceFolders?.map((folder) => folder.uri) ?? [])];
 }
 
 function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webview: vscode.Webview): string {
@@ -306,6 +447,47 @@ function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webv
 
 function blockedImageUri(): string {
 	return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+}
+
+function rewriteMermaidBlocks(html: string): string {
+	return html.replace(
+		/<div class="listingblock">\s*<div class="content">\s*<pre class="highlight"><code class="language-mermaid" data-lang="mermaid">([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/gi,
+		(_match: string, source: string) => `<div class="mermaid-diagram"><pre class="mermaid">${source}</pre></div>`,
+	);
+}
+
+function renderMermaidBlock(source: string): string {
+	return `<div class="mermaid-diagram"><pre class="mermaid">${escapeHtml(source)}</pre></div>`;
+}
+
+function renderDiagramError(message: string): string {
+	return `<div class="mermaid-diagram mermaid-error">${escapeHtml(message)}</div>`;
+}
+
+function readLocalDiagramSource(baseDir: string, target: string): { ok: true; value: string } | { ok: false; value: string } {
+	if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(target)) {
+		return { ok: false, value: `Remote Mermaid macro targets are disabled: ${target}` };
+	}
+
+	if (path.isAbsolute(target)) {
+		return { ok: false, value: `Absolute Mermaid macro targets are disabled: ${target}` };
+	}
+
+	const resolvedBaseDir = path.resolve(baseDir);
+	const resolvedTarget = path.resolve(resolvedBaseDir, target);
+	const relativeTarget = path.relative(resolvedBaseDir, resolvedTarget);
+
+	if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
+		return { ok: false, value: `Mermaid macro target is outside the document directory: ${target}` };
+	}
+
+	try {
+		return { ok: true, value: fs.readFileSync(resolvedTarget, 'utf8') };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+
+		return { ok: false, value: `Unable to read Mermaid macro target ${target}: ${message}` };
+	}
 }
 
 function splitUriSuffix(value: string): { path: string; suffix: string } {
@@ -355,4 +537,15 @@ function escapeHtml(value: string): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
+}
+
+function getNonce() {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	let value = '';
+
+	for (let index = 0; index < 32; index += 1) {
+		value += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+
+	return value;
 }

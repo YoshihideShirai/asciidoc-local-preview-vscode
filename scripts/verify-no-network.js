@@ -63,6 +63,30 @@ const expectedText = [
 		text: "default-src 'none'",
 		message: 'Webview CSP must deny all loads by default.',
 	},
+	{
+		file: 'src/extension.ts',
+		text: "setBlockedGlobal('fetch')",
+		message: 'Webview must install a fetch guard before loading vendored preview scripts.',
+	},
+	{
+		file: 'src/extension.ts',
+		text: "setBlockedGlobal('XMLHttpRequest')",
+		message: 'Webview must install an XMLHttpRequest guard before loading vendored preview scripts.',
+	},
+];
+
+const vendoredFiles = [
+	{
+		file: 'media/mermaid.min.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
 ];
 
 const failures = [];
@@ -90,6 +114,7 @@ for (const expected of expectedText) {
 }
 
 verifyRuntimeDependencies();
+verifyVendoredFiles();
 
 if (failures.length > 0) {
 	console.error('No-network verification failed:');
@@ -137,6 +162,30 @@ function verifyRuntimeDependencies() {
 	for (const dependency of dependencies) {
 		if (!allowedRuntimeDependencies.has(dependency)) {
 			failures.push(`package.json: runtime dependency "${dependency}" is not in the no-network allowlist.`);
+		}
+	}
+}
+
+function verifyVendoredFiles() {
+	const guardSource = fs.readFileSync(path.join(root, 'src/extension.ts'), 'utf8');
+	const hasWebviewNetworkGuard = guardSource.includes("setBlockedGlobal('fetch')")
+		&& guardSource.includes("setBlockedGlobal('XMLHttpRequest')")
+		&& guardSource.includes("setBlockedGlobal('WebSocket')")
+		&& guardSource.includes("setBlockedGlobal('EventSource')")
+		&& guardSource.includes("sendBeacon");
+
+	for (const vendored of vendoredFiles) {
+		const file = path.join(root, vendored.file);
+		if (!fs.existsSync(file)) {
+			failures.push(`${vendored.file}: vendored file is missing.`);
+			continue;
+		}
+
+		const text = fs.readFileSync(file, 'utf8');
+		for (const pattern of vendored.patterns) {
+			if (pattern.test(text) && !hasWebviewNetworkGuard) {
+				failures.push(`${vendored.file}: vendored file contains blocked network API pattern ${pattern}, but the Webview network guard is missing.`);
+			}
 		}
 	}
 }

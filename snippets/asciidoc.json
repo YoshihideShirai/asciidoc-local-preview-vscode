@@ -21,6 +21,26 @@
 		],
 		"description": "Insert an AsciiDoc source block"
 	},
+	"Mermaid diagram": {
+		"prefix": "mermaid",
+		"body": [
+			"[mermaid]",
+			"----",
+			"graph TD",
+			"  ${1:A} --> ${2:B}",
+			"----",
+			"$0"
+		],
+		"description": "Insert a local Mermaid diagram block"
+	},
+	"Mermaid diagram macro": {
+		"prefix": "mermaidmacro",
+		"body": [
+			"mermaid::${1:diagrams/example.mmd}[]",
+			"$0"
+		],
+		"description": "Insert a local Mermaid diagram macro"
+	},
 	"Admonition": {
 		"prefix": "admon",
 		"body": [
