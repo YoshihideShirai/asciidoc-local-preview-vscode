@@ -28,6 +28,10 @@
           ".asciidoc",
           ".asc"
         ],
+        "icon": {
+          "light": "./media/asciidoc-file-icon.svg",
+          "dark": "./media/asciidoc-file-icon.svg"
+        },
         "configuration": "./language-configuration.json"
       }
     ],
