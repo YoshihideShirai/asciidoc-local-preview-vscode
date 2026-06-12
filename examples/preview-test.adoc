@@ -1,3 +1,6 @@
+:sectnums:
+:stem: latexmath
+
 = AsciiDoc Preview Test
 :toc:
 :sectanchors:
