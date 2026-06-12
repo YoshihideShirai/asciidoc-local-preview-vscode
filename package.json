@@ -32,6 +32,7 @@
         ],
         "extensions": [
           ".adoc",
+          ".ad",
           ".asciidoc",
           ".asc"
         ],
@@ -40,6 +41,13 @@
           "dark": "./media/asciidoc-file-icon.svg"
         },
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "asciidoc",
+        "scopeName": "text.asciidoc",
+        "path": "./syntaxes/asciidoc.tmLanguage.json"
       }
     ],
     "commands": [
