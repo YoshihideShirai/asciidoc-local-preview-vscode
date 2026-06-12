@@ -7,7 +7,7 @@ const asciidoctor = asciidoctorFactory();
 const asciidoctorExtensions = asciidoctor.Extensions.create();
 const previewPanels = new Map<string, AsciiDocPreviewPanel>();
 let diagramProcessorsRegistered = false;
-const diagramBlockNames = ['mermaid', 'plantuml'];
+const diagramBlockNames = ['mermaid', 'plantuml', 'nomnoml', 'vega', 'vegalite', 'wavedrom', 'bytefield'];
 
 export function activate(context: vscode.ExtensionContext) {
 	registerDiagramProcessors();
@@ -41,12 +41,11 @@ function registerDiagramProcessors() {
 		});
 	});
 
-	registerDiagramBlock('mermaid', 'listing');
-	registerDiagramBlock('mermaidliteral', 'literal', 'mermaid');
-	registerDiagramBlock('plantuml', 'listing');
-	registerDiagramBlock('plantumlliteral', 'literal', 'plantuml');
-	registerDiagramMacro('mermaid');
-	registerDiagramMacro('plantuml');
+	for (const diagramType of diagramBlockNames) {
+		registerDiagramBlock(diagramType, 'listing');
+		registerDiagramBlock(`${diagramType}literal`, 'literal', diagramType);
+		registerDiagramMacro(diagramType);
+	}
 }
 
 function registerDiagramBlock(blockName: string, context: string, diagramType = blockName) {
@@ -200,6 +199,15 @@ class AsciiDocPreviewPanel {
 		const mathJaxFontBaseUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mathjax-newcm'));
 		const plantUmlScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'plantuml.js'));
 		const plantUmlVizScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'viz-global.js'));
+		const graphreScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'graphre.js'));
+		const nomnomlScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'nomnoml.js'));
+		const vegaScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'vega.min.js'));
+		const vegaLiteScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'vega-lite.min.js'));
+		const vegaInterpreterScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'vega-interpreter.js'));
+		const json5ScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'json5.min.js'));
+		const waveDromSkinScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'wavedrom-skin-default.js'));
+		const waveDromScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'wavedrom.min.js'));
+		const bitfieldScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'bitfield.js'));
 
 		return `<!DOCTYPE html>
 <html lang="en">
@@ -215,6 +223,7 @@ class AsciiDocPreviewPanel {
 			--vscode-error-color: var(--vscode-errorForeground);
 		}
 
+		.diagram-frame,
 		.mermaid-diagram {
 			overflow: auto;
 			margin: 0 0 1rem;
@@ -224,15 +233,7 @@ class AsciiDocPreviewPanel {
 			background: var(--pre-background);
 		}
 
-		.plantuml-diagram {
-			overflow: auto;
-			margin: 0 0 1rem;
-			padding: 16px;
-			border: 1px solid var(--border);
-			border-radius: 6px;
-			background: var(--pre-background);
-		}
-
+		.diagram-frame svg,
 		.mermaid-diagram svg {
 			display: block;
 			max-width: 100%;
@@ -240,23 +241,12 @@ class AsciiDocPreviewPanel {
 			margin: 0 auto;
 		}
 
-		.plantuml-diagram svg {
-			display: block;
-			max-width: 100%;
-			height: auto;
-			margin: 0 auto;
-		}
-
-		.plantuml-source {
+		.diagram-source {
 			display: none;
 		}
 
+		.diagram-error,
 		.mermaid-error {
-			white-space: pre-wrap;
-			color: var(--vscode-error-color);
-		}
-
-		.plantuml-error {
 			white-space: pre-wrap;
 			color: var(--vscode-error-color);
 		}
@@ -307,6 +297,15 @@ class AsciiDocPreviewPanel {
 		})();
 	</script>
 	<script nonce="${nonce}" src="${mermaidScriptUri}"></script>
+	<script nonce="${nonce}" src="${graphreScriptUri}"></script>
+	<script nonce="${nonce}" src="${nomnomlScriptUri}"></script>
+	<script nonce="${nonce}" src="${vegaScriptUri}"></script>
+	<script nonce="${nonce}" src="${vegaLiteScriptUri}"></script>
+	<script nonce="${nonce}" src="${vegaInterpreterScriptUri}"></script>
+	<script nonce="${nonce}" src="${json5ScriptUri}"></script>
+	<script nonce="${nonce}" src="${waveDromSkinScriptUri}"></script>
+	<script nonce="${nonce}" src="${waveDromScriptUri}"></script>
+	<script nonce="${nonce}" src="${bitfieldScriptUri}"></script>
 	<script nonce="${nonce}">
 		window.MathJax = {
 			tex: {
@@ -382,6 +381,137 @@ class AsciiDocPreviewPanel {
 				},
 			);
 		}
+	</script>
+	<script nonce="${nonce}">
+		(() => {
+			const showDiagramError = (output, message) => {
+				output.classList.add('diagram-error');
+				output.textContent = String(message || 'Diagram rendering failed');
+			};
+
+			for (const diagram of document.querySelectorAll('.nomnoml-diagram')) {
+				const source = diagram.querySelector('.nomnoml-source');
+				const output = diagram.querySelector('.nomnoml-output');
+				if (!source || !output || !window.nomnoml) {
+					continue;
+				}
+
+				try {
+					output.innerHTML = window.nomnoml.renderSvg(source.textContent);
+				} catch (error) {
+					showDiagramError(output, error && error.message ? error.message : error);
+				}
+			}
+		})();
+	</script>
+	<script nonce="${nonce}">
+		(async () => {
+			const renderVega = async (diagram, diagramType) => {
+				const source = diagram.querySelector('.' + diagramType + '-source');
+				const output = diagram.querySelector('.' + diagramType + '-output');
+				if (!source || !output || !window.vega || !window.vegaInterpreter) {
+					return;
+				}
+
+				try {
+					const spec = JSON.parse(source.textContent);
+					const vegaSpec = diagramType === 'vegalite'
+						? window.vegaLite.compile(spec).spec
+						: spec;
+					const runtime = window.vega.parse(vegaSpec, null, { ast: true });
+					const view = new window.vega.View(runtime, {
+						expr: window.vegaInterpreter.expressionInterpreter,
+						renderer: 'svg'
+					})
+						.initialize(output)
+						.hover();
+
+					await view.runAsync();
+				} catch (error) {
+					output.classList.add('diagram-error');
+					output.textContent = String(error && error.message ? error.message : error);
+				}
+			};
+
+			for (const diagramType of ['vega', 'vegalite']) {
+				for (const diagram of document.querySelectorAll('.' + diagramType + '-diagram')) {
+					await renderVega(diagram, diagramType);
+				}
+			}
+		})();
+	</script>
+	<script nonce="${nonce}">
+		(() => {
+			for (const [index, diagram] of [...document.querySelectorAll('.wavedrom-diagram')].entries()) {
+				const source = diagram.querySelector('.wavedrom-source');
+				const output = diagram.querySelector('.wavedrom-output');
+				if (!source || !output || !window.WaveDrom || !window.JSON5) {
+					continue;
+				}
+
+				try {
+					const spec = window.JSON5.parse(source.textContent);
+					const displayPrefix = 'WaveDrom_Display_';
+					output.id = displayPrefix + index;
+					window.WaveDrom.RenderWaveForm(index, spec, displayPrefix, false);
+				} catch (error) {
+					output.classList.add('diagram-error');
+					output.textContent = String(error && error.message ? error.message : error);
+				}
+			}
+		})();
+	</script>
+	<script nonce="${nonce}">
+		(() => {
+			const svgNamespace = 'http' + '://www.w3.org/2000/svg';
+			const isAttributes = (value) => value && typeof value === 'object' && !Array.isArray(value);
+			const createSvgNode = (jsonMl) => {
+				if (typeof jsonMl === 'string' || typeof jsonMl === 'number' || typeof jsonMl === 'boolean') {
+					return document.createTextNode(String(jsonMl));
+				}
+
+				const [tagName, maybeAttributes, ...rest] = jsonMl;
+				const attributes = isAttributes(maybeAttributes) ? maybeAttributes : {};
+				const children = isAttributes(maybeAttributes) ? rest : [maybeAttributes, ...rest];
+				const element = document.createElementNS(svgNamespace, tagName);
+
+				for (const [name, value] of Object.entries(attributes)) {
+					if (value !== undefined && value !== null) {
+						element.setAttribute(name, String(value));
+					}
+				}
+
+				for (const child of children) {
+					if (child !== undefined && child !== null) {
+						element.appendChild(createSvgNode(child));
+					}
+				}
+
+				return element;
+			};
+
+			for (const diagram of document.querySelectorAll('.bytefield-diagram')) {
+				const source = diagram.querySelector('.bytefield-source');
+				const output = diagram.querySelector('.bytefield-output');
+				if (!source || !output || !window.bitfield || !window.JSON5) {
+					continue;
+				}
+
+				try {
+					const spec = window.JSON5.parse(source.textContent);
+					const fields = Array.isArray(spec) ? spec : spec.reg || spec.fields;
+					const options = Array.isArray(spec) ? {} : spec.options || {};
+					if (!Array.isArray(fields)) {
+						throw new Error('Bytefield source must be an array, or an object with a reg or fields array.');
+					}
+
+					output.replaceChildren(createSvgNode(window.bitfield.render(fields, options)));
+				} catch (error) {
+					output.classList.add('diagram-error');
+					output.textContent = String(error && error.message ? error.message : error);
+				}
+			}
+		})();
 	</script>
 </body>
 </html>`;
@@ -461,15 +591,14 @@ function blockedImageUri(): string {
 }
 
 function rewriteSourceDiagramBlocks(html: string): string {
-	const withMermaid = html.replace(
-		/<div class="listingblock">\s*<div class="content">\s*<pre class="highlight"><code class="language-mermaid" data-lang="mermaid">([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/gi,
-		(_match: string, source: string) => `<div class="mermaid-diagram"><pre class="mermaid">${source}</pre></div>`,
-	);
+	let rewritten = html;
 
-	return withMermaid.replace(
-		/<div class="listingblock">\s*<div class="content">\s*<pre class="highlight"><code class="language-plantuml" data-lang="plantuml">([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/gi,
-		(_match: string, source: string) => renderDiagramBlock('plantuml', unescapeHtml(source)),
-	);
+	for (const diagramType of diagramBlockNames) {
+		const pattern = new RegExp(`<div class="listingblock">\\s*<div class="content">\\s*<pre class="highlight"><code class="language-${diagramType}" data-lang="${diagramType}">([\\s\\S]*?)<\\/code><\\/pre>\\s*<\\/div>\\s*<\\/div>`, 'gi');
+		rewritten = rewritten.replace(pattern, (_match: string, source: string) => renderDiagramBlock(diagramType, unescapeHtml(source)));
+	}
+
+	return rewritten;
 }
 
 function renderDiagramBlock(diagramType: string, source: string): string {
@@ -478,14 +607,22 @@ function renderDiagramBlock(diagramType: string, source: string): string {
 	}
 
 	if (diagramType === 'plantuml') {
-		return `<div class="plantuml-diagram"><pre class="plantuml-source">${escapeHtml(normalizePlantUmlSource(source))}</pre><div class="plantuml-output"></div></div>`;
+		return renderClientSideDiagramBlock(diagramType, normalizePlantUmlSource(source));
+	}
+
+	if (['nomnoml', 'vega', 'vegalite', 'wavedrom', 'bytefield'].includes(diagramType)) {
+		return renderClientSideDiagramBlock(diagramType, source);
 	}
 
 	return renderDiagramError(diagramType, `Unsupported diagram type: ${diagramType}`);
 }
 
+function renderClientSideDiagramBlock(diagramType: string, source: string): string {
+	return `<div class="${escapeHtml(diagramType)}-diagram diagram-frame"><pre class="${escapeHtml(diagramType)}-source diagram-source">${escapeHtml(source)}</pre><div class="${escapeHtml(diagramType)}-output"></div></div>`;
+}
+
 function renderDiagramError(diagramType: string, message: string): string {
-	return `<div class="${escapeHtml(diagramType)}-diagram ${escapeHtml(diagramType)}-error">${escapeHtml(message)}</div>`;
+	return `<div class="${escapeHtml(diagramType)}-diagram ${escapeHtml(diagramType)}-error diagram-error">${escapeHtml(message)}</div>`;
 }
 
 function normalizePlantUmlSource(source: string): string {

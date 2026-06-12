@@ -1,0 +1,181 @@
+= AsciiDoc Preview Test
+:toc:
+:sectanchors:
+
+This file exercises the local preview features in AsciiDoc All in One.
+
+== Basic AsciiDoc
+
+AsciiDoc inline formatting should render correctly:
+
+* *bold*
+* _italic_
+* `monospace`
+* link:README.md[local README link]
+
+[NOTE]
+====
+Admonitions, lists, tables, diagrams, and math should all render without remote network access.
+====
+
+[%header,cols="1,2"]
+|===
+|Feature |Expected preview behavior
+
+|AsciiDoc
+|Rendered locally with Asciidoctor.js
+
+|Images
+|Remote image URLs are blocked, local image paths are rewritten for the VS Code Webview
+
+|Diagrams
+|Rendered from bundled JavaScript assets
+|===
+
+== MathJax
+
+Inline math: latexmath:[E = mc^2]
+
+[stem]
+++++
+\int_0^1 x^2 dx = \frac{1}{3}
+++++
+
+== Mermaid
+
+[mermaid]
+----
+graph TD
+    A[Start] --> B{Is it local?}
+    B -- Yes --> C[Render in Webview]
+    B -- No --> D[Block network access]
+----
+
+[mermaid]
+....
+sequenceDiagram
+    participant User
+    participant Preview
+    User->>Preview: Open AsciiDoc file
+    Preview-->>User: Render bundled Mermaid
+....
+
+== PlantUML
+
+[plantuml]
+....
+Alice -> Bob : Hello
+Bob --> Alice : Rendered locally
+....
+
+== Nomnoml
+
+[nomnoml]
+----
+#direction: right
+[Document] -> [AsciiDoc Preview]
+[AsciiDoc Preview] -> [Bundled nomnoml]
+----
+
+== Vega-Lite
+
+[vegalite]
+----
+{
+  "data": {
+    "values": [
+      {"category": "Mermaid", "count": 3},
+      {"category": "PlantUML", "count": 2},
+      {"category": "Vega-Lite", "count": 4}
+    ]
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "category", "type": "nominal"},
+    "y": {"field": "count", "type": "quantitative"},
+    "color": {"field": "category", "type": "nominal"}
+  }
+}
+----
+
+== Vega
+
+[vega]
+----
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "width": 320,
+  "height": 120,
+  "padding": 5,
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {"x": 0, "y": 28},
+        {"x": 1, "y": 55},
+        {"x": 2, "y": 43},
+        {"x": 3, "y": 91},
+        {"x": 4, "y": 81}
+      ]
+    }
+  ],
+  "scales": [
+    {"name": "x", "type": "point", "range": "width", "domain": {"data": "table", "field": "x"}},
+    {"name": "y", "range": "height", "nice": true, "zero": true, "domain": {"data": "table", "field": "y"}}
+  ],
+  "axes": [
+    {"orient": "bottom", "scale": "x"},
+    {"orient": "left", "scale": "y"}
+  ],
+  "marks": [
+    {
+      "type": "line",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "x", "field": "x"},
+          "y": {"scale": "y", "field": "y"},
+          "stroke": {"value": "#3b82f6"},
+          "strokeWidth": {"value": 2}
+        }
+      }
+    }
+  ]
+}
+----
+
+== WaveDrom
+
+[wavedrom]
+----
+{signal: [
+  {name: 'clk',  wave: 'p.....'},
+  {name: 'data', wave: 'x.34.x', data: ['A', 'B']},
+  {name: 'req',  wave: '0.1..0'}
+]}
+----
+
+== Bytefield
+
+[bytefield]
+----
+[
+  {"name": "DATA", "bits": 8, "attr": "RO"},
+  {"bits": 4},
+  {"name": "FLAGS", "bits": 4, "attr": "RW"},
+  {"name": "CRC", "bits": 16, "attr": "RO"}
+]
+----
+
+== Source Block Compatibility
+
+[source,mermaid]
+----
+graph LR
+    S[source,mermaid] --> P[Preview diagram]
+----
+
+[source,nomnoml]
+----
+[source,nomnoml] -> [Preview diagram]
+----

@@ -131,6 +131,105 @@ const vendoredFiles = [
 			/\bimportScripts\s*\(/,
 		],
 	},
+	{
+		file: 'media/graphre.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/nomnoml.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/vega.min.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/vega-lite.min.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/vega-interpreter.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/json5.min.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/wavedrom-skin-default.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/wavedrom.min.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
+	{
+		file: 'media/bitfield.js',
+		patterns: [
+			/\bfetch\s*\(/,
+			/\bXMLHttpRequest\b/,
+			/\bWebSocket\b/,
+			/\bEventSource\b/,
+			/\bnavigator\.sendBeacon\b/,
+			/\bimportScripts\s*\(/,
+		],
+	},
 ];
 
 const failures = [];

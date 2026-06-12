@@ -10,6 +10,7 @@ AsciiDoc editing and preview support for Visual Studio Code, powered by Asciidoc
 - Local MathJax rendering for AsciiDoc stem and `latexmath` expressions.
 - Local Mermaid diagram rendering for Kroki-compatible `[mermaid]` blocks.
 - Local PlantUML diagram rendering for Kroki-compatible `[plantuml]` blocks.
+- Local JavaScript-based Kroki-compatible rendering for `[nomnoml]`, `[vega]`, `[vegalite]`, `[wavedrom]`, and `[bytefield]` blocks.
 - Basic editing commands for bold, italic, monospace, links, section headings, and unordered lists.
 - Snippets for document headers, source blocks, admonitions, and tables.
 
@@ -28,6 +29,7 @@ The preview path is designed to avoid external network access:
 - MathJax is loaded from the bundled `media/mathjax/tex-chtml.js` file with bundled local fonts, not a CDN.
 - Mermaid is loaded from the bundled `media/mermaid.min.js` file, not a CDN or Kroki server.
 - PlantUML is loaded from the bundled `media/plantuml.js` and `media/viz-global.js` files, not a CDN, Java process, Graphviz binary, or Kroki server.
+- Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield are loaded from bundled `media` files, not a CDN or Kroki server.
 
 The bundled preview stylesheet is adapted from the Antora Default UI project and keeps its MPL-2.0 license notice in `media/antora-default-preview.css`.
 Bundled MathJax assets keep Apache-2.0 license copies in `media/mathjax/LICENSE` and `media/mathjax-newcm/LICENSE`.
@@ -90,6 +92,45 @@ plantuml::diagrams/sequence.puml[]
 ```
 
 Macro targets must be relative local paths inside the document directory. Remote URLs, absolute paths, and paths outside the document directory are rejected in the preview.
+
+## JavaScript Kroki Diagrams
+
+The preview also supports local JavaScript renderers for Kroki-compatible Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield blocks:
+
+```asciidoc
+[nomnoml]
+----
+[User] -> [AsciiDoc Preview]
+----
+
+[vegalite]
+----
+{
+  "data": {"values": [{"x": "A", "y": 5}, {"x": "B", "y": 3}]},
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "x", "type": "nominal"},
+    "y": {"field": "y", "type": "quantitative"}
+  }
+}
+----
+
+[wavedrom]
+----
+{signal: [{name: 'clk', wave: 'p.....'}, {name: 'data', wave: 'x.34.x'}]}
+----
+
+[bytefield]
+----
+[
+  {"name": "data", "bits": 8, "attr": "RO"},
+  {"bits": 4},
+  {"name": "flags", "bits": 4, "attr": "RW"}
+]
+----
+```
+
+Both listing (`----`) and literal (`....`) block delimiters are supported. Local file macros such as `nomnoml::diagrams/model.nomnoml[]`, `vega::charts/spec.json[]`, `vegalite::charts/spec.vl.json[]`, `wavedrom::waves/timing.json5[]`, and `bytefield::registers/status.json[]` are also supported with the same local-path restrictions as Mermaid and PlantUML. `[source,nomnoml]`, `[source,vega]`, `[source,vegalite]`, `[source,wavedrom]`, and `[source,bytefield]` blocks are rendered as diagrams for compatibility.
 
 Run the no-network verification phase before publishing or accepting AI-generated changes:
 
