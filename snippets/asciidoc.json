@@ -1,0 +1,45 @@
+{
+	"Document header": {
+		"prefix": "adochdr",
+		"body": [
+			"= ${1:Document Title}",
+			"${2:Author Name}",
+			":toc:",
+			":icons: font",
+			"",
+			"$0"
+		],
+		"description": "Insert an AsciiDoc document header"
+	},
+	"Source block": {
+		"prefix": "srcblk",
+		"body": [
+			"[source,${1:javascript}]",
+			"----",
+			"$0",
+			"----"
+		],
+		"description": "Insert an AsciiDoc source block"
+	},
+	"Admonition": {
+		"prefix": "admon",
+		"body": [
+			"${1|NOTE,TIP,IMPORTANT,WARNING,CAUTION|}: ${2:Message}",
+			"$0"
+		],
+		"description": "Insert an AsciiDoc admonition"
+	},
+	"Table": {
+		"prefix": "adtable",
+		"body": [
+			"|===",
+			"| ${1:Header 1} | ${2:Header 2}",
+			"",
+			"| ${3:Cell 1}",
+			"| ${4:Cell 2}",
+			"|===",
+			"$0"
+		],
+		"description": "Insert a simple AsciiDoc table"
+	}
+}

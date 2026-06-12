@@ -1,21 +1,128 @@
 {
   "name": "asciidoc-all-in-one",
-  "displayName": "asciidoc-all-in-one",
-  "description": "",
+  "displayName": "AsciiDoc All in One",
+  "description": "AsciiDoc editing and preview support powered by Asciidoctor.js.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.120.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Visualization"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:asciidoc",
+    "onCommand:asciidoc-all-in-one.openPreview"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "asciidoc",
+        "aliases": [
+          "AsciiDoc",
+          "asciidoc"
+        ],
+        "extensions": [
+          ".adoc",
+          ".asciidoc",
+          ".asc"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
     "commands": [
       {
-        "command": "asciidoc-all-in-one.helloWorld",
-        "title": "Hello World"
+        "command": "asciidoc-all-in-one.openPreview",
+        "title": "Open AsciiDoc Preview",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.refreshPreview",
+        "title": "Refresh Preview",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.toggleBold",
+        "title": "Bold",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.toggleItalic",
+        "title": "Italic",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.toggleMonospace",
+        "title": "Monospace",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.insertLink",
+        "title": "Insert Link",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.insertHeading",
+        "title": "Insert Section Heading",
+        "category": "AsciiDoc"
+      },
+      {
+        "command": "asciidoc-all-in-one.insertUnorderedList",
+        "title": "Insert Unordered List",
+        "category": "AsciiDoc"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "asciidoc-all-in-one.openPreview",
+          "when": "resourceLangId == asciidoc",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "asciidoc-all-in-one.openPreview",
+          "when": "resourceLangId == asciidoc",
+          "group": "navigation"
+        },
+        {
+          "command": "asciidoc-all-in-one.toggleBold",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        },
+        {
+          "command": "asciidoc-all-in-one.toggleItalic",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        },
+        {
+          "command": "asciidoc-all-in-one.toggleMonospace",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        },
+        {
+          "command": "asciidoc-all-in-one.insertLink",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        },
+        {
+          "command": "asciidoc-all-in-one.insertHeading",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        },
+        {
+          "command": "asciidoc-all-in-one.insertUnorderedList",
+          "when": "editorLangId == asciidoc",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "snippets": [
+      {
+        "language": "asciidoc",
+        "path": "./snippets/asciidoc.json"
       }
     ]
   },
@@ -28,13 +135,16 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.120.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.56.1",
+    "@types/vscode": "^1.120.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.3",
     "typescript": "^5.9.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "typescript-eslint": "^8.56.1"
+  },
+  "dependencies": {
+    "asciidoctor": "^3.0.4"
   }
 }
