@@ -150,7 +150,7 @@ The preview path uses these controls:
 - Asciidoctor.js runs in the extension host with `safe: 'safe'`.
 - `allow-uri-read` is explicitly disabled during conversion.
 - Remote image URLs are replaced with an empty local data image before rendering.
-- Webview `localResourceRoots` are limited to the extension directory and the current document directory.
+- Webview `localResourceRoots` are limited to the extension directory, workspace folders, and the current document directory.
 - CSS, MathJax, Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield load from bundled files under `media`.
 - PlantUML rendering does not require Java, Graphviz, or a Kroki server.
 

@@ -150,7 +150,7 @@ flowchart LR
 - Asciidoctor.js は拡張ホスト内で `safe: 'safe'` として実行されます。
 - 変換時に `allow-uri-read` は明示的に無効化されています。
 - リモート画像 URL はプレビュー前に空のローカル data image に置き換えられます。
-- Webview の `localResourceRoots` は拡張ディレクトリと現在のドキュメントディレクトリに限定されます。
+- Webview の `localResourceRoots` は拡張ディレクトリ、workspace folders、現在のドキュメントディレクトリに限定されます。
 - CSS、MathJax、Mermaid、PlantUML、Nomnoml、Vega、Vega-Lite、WaveDrom、Bytefield は同梱された `media` 配下のファイルから読み込まれます。
 - PlantUML の描画に Java、Graphviz、Kroki サーバーは不要です。
 
