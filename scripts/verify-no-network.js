@@ -13,7 +13,7 @@ const scanTargets = [
 ];
 
 const allowedRuntimeDependencies = new Set([
-	'asciidoctor',
+	'@asciidoctor/core',
 ]);
 
 const blockedPatterns = [

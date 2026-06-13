@@ -6,7 +6,6 @@ src/**
 out/emoji-map.js
 out/test/**
 out/**/*.map
-node_modules/**
 scripts/**
 examples/**
 *.vsix

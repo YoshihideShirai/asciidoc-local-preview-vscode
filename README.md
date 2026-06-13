@@ -18,7 +18,7 @@ AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc
 - Renders `emoji:name[]` inline macros as local Unicode emoji.
 - Draws Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield diagrams from bundled local assets.
 - Adds common AsciiDoc editing commands for bold, italic, monospace, links, headings, and unordered lists.
-- Includes snippets for document headers, source blocks, admonitions, and tables.
+- Coexists with `asciidoctor/asciidoctor-vscode` by leaving AsciiDoc language support, grammar, snippets, and file icons to that extension.
 - Keeps the preview path independent of CDNs, Kroki servers, and remote image loading.
 
 
@@ -35,6 +35,8 @@ AsciiDoc Local Preview is narrower than `asciidoctor/asciidoctor-vscode`: it foc
 | Math / emoji | Bundled MathJax / emoji | Extensions available |
 | Export | None | PDF / HTML / DocBook |
 | Best for | Confidential or offline checks | Conversion and publishing |
+
+AsciiDoc Local Preview does not contribute its own `asciidoc` language definition or TextMate grammar. If you want syntax highlighting, snippets, file associations, PDF export, or broader authoring support, install `asciidoctor/asciidoctor-vscode` alongside this extension.
 
 ## Getting Started
 

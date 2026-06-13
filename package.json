@@ -2,7 +2,7 @@
   "name": "asciidoc-local-preview",
   "displayName": "AsciiDoc Local Preview",
   "description": "Local AsciiDoc preview for VS Code with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "YoshihideShirai",
   "license": "MIT",
   "icon": "media/extension-icon.png",
@@ -18,38 +18,17 @@
     "Visualization"
   ],
   "activationEvents": [
-    "onLanguage:asciidoc",
-    "onCommand:asciidoc-local-preview.openPreview"
+    "onCommand:asciidoc-local-preview.openPreview",
+    "onCommand:asciidoc-local-preview.refreshPreview",
+    "onCommand:asciidoc-local-preview.toggleBold",
+    "onCommand:asciidoc-local-preview.toggleItalic",
+    "onCommand:asciidoc-local-preview.toggleMonospace",
+    "onCommand:asciidoc-local-preview.insertLink",
+    "onCommand:asciidoc-local-preview.insertHeading",
+    "onCommand:asciidoc-local-preview.insertUnorderedList"
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "languages": [
-      {
-        "id": "asciidoc",
-        "aliases": [
-          "AsciiDoc",
-          "asciidoc"
-        ],
-        "extensions": [
-          ".adoc",
-          ".ad",
-          ".asciidoc",
-          ".asc"
-        ],
-        "icon": {
-          "light": "./media/asciidoc-file-icon.svg",
-          "dark": "./media/asciidoc-file-icon.svg"
-        },
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "asciidoc",
-        "scopeName": "text.asciidoc",
-        "path": "./syntaxes/asciidoc.tmLanguage.json"
-      }
-    ],
     "commands": [
       {
         "command": "asciidoc-local-preview.openPreview",
@@ -97,58 +76,54 @@
       "editor/title": [
         {
           "command": "asciidoc-local-preview.openPreview",
-          "when": "resourceLangId == asciidoc",
+          "when": "resourceLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "navigation"
         }
       ],
       "editor/context": [
         {
           "command": "asciidoc-local-preview.openPreview",
-          "when": "resourceLangId == asciidoc",
+          "when": "resourceLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "navigation"
         },
         {
           "command": "asciidoc-local-preview.toggleBold",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         },
         {
           "command": "asciidoc-local-preview.toggleItalic",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         },
         {
           "command": "asciidoc-local-preview.toggleMonospace",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         },
         {
           "command": "asciidoc-local-preview.insertLink",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         },
         {
           "command": "asciidoc-local-preview.insertHeading",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         },
         {
           "command": "asciidoc-local-preview.insertUnorderedList",
-          "when": "editorLangId == asciidoc",
+          "when": "editorLangId == asciidoc || resourceExtname == .adoc || resourceExtname == .ad || resourceExtname == .asciidoc || resourceExtname == .asc",
           "group": "1_modification"
         }
       ]
-    },
-    "snippets": [
-      {
-        "language": "asciidoc",
-        "path": "./snippets/asciidoc.json"
-      }
-    ]
+    }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile && npm run bundle",
-    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --sourcemap",
+    "vscode:prepublish": "npm run build",
+    "build": "npm run clean && npm run compile && npm run bundle",
+    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --external:@asciidoctor/core --outfile=out/extension.js --sourcemap",
+    "clean": "rm -rf out",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "verify:no-network": "node scripts/verify-no-network.js",
@@ -179,6 +154,6 @@
     "wavedrom": "^3.6.1"
   },
   "dependencies": {
-    "asciidoctor": "^3.0.4"
+    "@asciidoctor/core": "^2.2.7"
   }
 }
