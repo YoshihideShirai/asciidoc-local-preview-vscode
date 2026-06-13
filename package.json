@@ -144,6 +144,7 @@
     "wavedrom": "^3.6.1"
   },
   "dependencies": {
-    "@asciidoctor/core": "^2.2.7"
+    "@asciidoctor/core": "^2.2.7",
+    "asciidoctor-numbered-captions": "git+https://github.com/YoshihideShirai/asciidoctor-numbered-captions.git#v1.0.0"
   }
 }

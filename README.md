@@ -15,6 +15,7 @@ AsciiDoc Zero-Network Preview is a Visual Studio Code extension for previewing A
 - Updates the preview from the unsaved editor buffer.
 - Renders AsciiDoc inside VS Code with Asciidoctor.js.
 - Supports MathJax for AsciiDoc `stem` blocks and `latexmath` expressions.
+- Numbers figure, table, and equation captions with chapter-aware prefixes.
 - Renders `emoji:name[]` inline macros as local Unicode emoji.
 - Draws Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield diagrams from bundled local assets.
 - Adds common AsciiDoc editing commands for bold, italic, monospace, links, headings, and unordered lists.
@@ -37,6 +38,18 @@ AsciiDoc Zero-Network Preview is narrower than `asciidoctor/asciidoctor-vscode`:
 | Best for | Confidential or offline checks | Conversion and publishing |
 
 AsciiDoc Zero-Network Preview does not contribute its own `asciidoc` language definition or TextMate grammar. If you want syntax highlighting, snippets, file associations, PDF export, or broader authoring support, install `asciidoctor/asciidoctor-vscode` alongside this extension.
+
+## Built-in Asciidoctor.js Extensions
+
+The preview registers these Asciidoctor.js extensions before converting each document:
+
+| Extension | Syntax / target | Purpose |
+| --- | --- | --- |
+| Diagram block processor | `[mermaid]`, `[plantuml]`, `[nomnoml]`, `[vega]`, `[vegalite]`, `[wavedrom]`, `[bytefield]` | Converts diagram blocks into local Webview render targets. |
+| Diagram block macro processor | `mermaid::path[]`, `plantuml::path[]`, and matching diagram macros | Reads local diagram source files relative to the document directory. |
+| Diagram literal preprocessor | `[mermaid] ....` and matching diagram literal blocks | Normalizes literal diagram blocks so they render through the same local pipeline. |
+| Emoji inline macro processor | `emoji:name[]` | Renders `asciidoctor-emoji` compatible inline macros as local Unicode emoji. |
+| Numbered captions tree processor | image, table, and stem blocks | Applies `asciidoctor-numbered-captions` chapter-aware caption numbering. |
 
 ## Getting Started
 
@@ -100,6 +113,16 @@ I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
 ```
 
 Supported emoji sizes include `1x`, `lg`, `2x`, `3x`, `4x`, `5x`, and explicit pixel sizes such as `42px`. Emoji are rendered as local Unicode text instead of loading SVGs from a CDN.
+
+## Numbered Captions
+
+Figure, table, and equation captions use `asciidoctor-numbered-captions` so numbering includes the current chapter, such as `Figure 1-1`, `Table 2-3`, or `Equation 4-2`.
+
+To use Asciidoctor's standard caption numbering for a document, add this header attribute:
+
+```asciidoc
+:numbered-captions-numbering: standard
+```
 
 ## Local Preview Boundary
 

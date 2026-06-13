@@ -1,0 +1,107 @@
+:sectnums:
+:stem: latexmath
+:toc:
+:sectanchors:
+:numbered-captions-numbering: chaptered
+:numbered-captions-chapter-level: 1
+:figure-caption: Figure
+:table-caption: Table
+:equation-caption: Equation
+
+= Asciidoctor Numbered Captions Test
+
+This file exercises `asciidoctor-numbered-captions` in AsciiDoc Zero-Network Preview.
+
+Expected caption numbering:
+
+* Chapter One starts at `1-1`.
+* Nested sections inside Chapter One continue the Chapter One counters.
+* Chapter Two resets each caption counter to `2-1`.
+* Figure, table, and equation captions are counted independently.
+
+== Chapter One
+
+.Chapter one figure
+image::../media/extension-icon.svg[AsciiDoc Zero-Network Preview icon,128,128]
+
+.Chapter one table
+[cols="1,2",options="header"]
+|===
+|Item |Expected caption
+
+|First table in Chapter One
+|Table 1-1
+|===
+
+.Chapter one equation
+[stem]
+++++
+E = mc^2
+++++
+
+=== Nested Section
+
+The next figure is inside a nested section, but `numbered-captions-chapter-level` is `1`, so it should still use the Chapter One prefix.
+
+.Nested chapter one figure
+image::../media/asciidoc-file-icon.svg[AsciiDoc file icon,128,128]
+
+.Nested chapter one table
+[cols="1,2",options="header"]
+|===
+|Item |Expected caption
+
+|Second table in Chapter One
+|Table 1-2
+|===
+
+.Nested chapter one equation
+[stem]
+++++
+\int_0^1 x^2 dx = \frac{1}{3}
+++++
+
+== Chapter Two
+
+.Chapter two figure
+image::../media/extension-icon.png[AsciiDoc Zero-Network Preview icon,128,128]
+
+.Chapter two table
+[cols="1,2",options="header"]
+|===
+|Item |Expected caption
+
+|First table in Chapter Two
+|Table 2-1
+|===
+
+.Chapter two equation
+[stem]
+++++
+a^2 + b^2 = c^2
+++++
+
+=== Nested Section In Chapter Two
+
+.Nested chapter two figure
+image::../media/asciidoc-file-icon.svg[AsciiDoc file icon,128,128]
+
+The nested figure should be `Figure 2-2`.
+
+== Sectioned Mode Quick Check
+
+To verify section-based numbering instead, change the document header to:
+
+----
+:numbered-captions-numbering: sectioned
+----
+
+With sectioned mode, captions in nested sections use the current section number, such as `Figure 1.1-1`.
+
+== Standard Mode Quick Check
+
+To compare with Asciidoctor's standard caption numbering, change the document header to:
+
+----
+:numbered-captions-numbering: standard
+----

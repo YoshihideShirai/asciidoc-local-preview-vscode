@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Add chapter-aware figure, table, and equation caption numbering via `asciidoctor-numbered-captions`.
+
 ## [0.0.4] - 2026-06-13
 
 - Improve coexistence with asciidoctor-vscode by avoiding AsciiDoc language contribution conflicts.
