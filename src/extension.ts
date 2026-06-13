@@ -521,7 +521,7 @@ class AsciiDocPreviewPanel {
 			api.initialize({
 				startOnLoad: false,
 				securityLevel: 'strict',
-				theme: document.body.classList.contains('vscode-dark') ? 'dark' : 'default'
+				theme: 'default'
 			});
 
 			await api.run({
