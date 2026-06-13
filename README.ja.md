@@ -8,6 +8,13 @@
 
 Visual Studio Code で AsciiDoc をローカルプレビューするための拡張機能です。編集中の `.adoc` / `.ad` / `.asciidoc` / `.asc` ファイルを VS Code 内の Webview に表示し、MathJax、Mermaid、PlantUML、Kroki 互換の図表も外部サービスなしで確認できます。
 
+次のような環境に向いています:
+
+- 企業内のドキュメント環境
+- インターネット接続を制限したネットワーク
+- セキュリティ要件の高い文書作成
+- 外部サービスの利用を禁止している組織
+
 ![AsciiDoc Zero-Network Preview demo](media/preview.gif)
 
 ## Highlights
@@ -126,22 +133,59 @@ I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
 
 ## Local Preview Boundary
 
-AsciiDoc Zero-Network Preview は、ドキュメント内容を外部サービスへ送らずにプレビューすることを目指しています。
+AsciiDoc Zero-Network Preview は、ドキュメント内容を CDN、Kroki サーバー、リモート画像ホスト、その他の外部サービスへ送らずにプレビューできるよう設計しています。単に「セキュアです」と主張するのではなく、複数の層で境界を作っています。
 
-- Asciidoctor.js は拡張ホスト内で実行されます。
-- `allow-uri-read` は明示的に無効化されています。
-- Webview CSP は `default-src 'none'` を使用します。
+```mermaid
+flowchart LR
+  A[未保存の AsciiDoc バッファ] --> B[拡張ホスト内の Asciidoctor.js]
+  B --> C[HTML 書き換え層]
+  C --> D[VS Code Webview]
+  D --> E[同梱 media アセット]
+  D -. CSP とガードでブロック .-> F[CDN / Kroki / リモートホスト]
+  C -. リモート画像 URL .-> G[空のローカル data image]
+```
+
+プレビュー経路では、次の制御を行います。
+
+- Asciidoctor.js は拡張ホスト内で `safe: 'safe'` として実行されます。
+- 変換時に `allow-uri-read` は明示的に無効化されています。
 - リモート画像 URL はプレビュー前に空のローカル data image に置き換えられます。
+- Webview の `localResourceRoots` は拡張ディレクトリと現在のドキュメントディレクトリに限定されます。
 - CSS、MathJax、Mermaid、PlantUML、Nomnoml、Vega、Vega-Lite、WaveDrom、Bytefield は同梱された `media` 配下のファイルから読み込まれます。
 - PlantUML の描画に Java、Graphviz、Kroki サーバーは不要です。
 
-公開前や生成コードを取り込む前には、ネットワーク利用を検査するスクリプトを実行できます。
+### ネットワークアクセス監査
+
+公開前や生成コードを取り込む前には、ネットワーク利用を検査する監査スクリプトを実行できます。
 
 ```sh
 npm run verify:no-network
 ```
 
-このチェックは `npm test` の前にも自動実行されます。
+このスクリプトは、拡張が管理するコードに次のような回帰パターンが入ると失敗します。
+
+- `fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource` などのブラウザー向けネットワーク API。
+- `http`、`https`、`net`、`tls`、`dns` などの Node.js ネットワークモジュール import。
+- `child_process`、`spawn`、`exec` などのプロセス実行 API。
+- 実行時コード内のリモート URL リテラル。
+- リモートの `http`、`https`、`wss`、ワイルドカードソースを許可する CSP ディレクティブ。
+- Asciidoctor 変換での `allow-uri-read: true` または `safe: 'unsafe'`。
+- ローカルプレビューの許可リスト外の runtime dependency。
+
+監査では、同梱プレビューライブラリが `fetch`、`XMLHttpRequest`、`WebSocket`、`EventSource`、`navigator.sendBeacon` の Webview ガードで保護されていることも確認します。このチェックは `npm test` の前にも自動実行されます。
+
+### CSP 設計方針
+
+Webview は `default-src 'none'` から開始し、ローカル描画に必要なソースだけを個別に許可します。
+
+| ディレクティブ | ポリシー | 意図 |
+| --- | --- | --- |
+| `default-src` | `'none'` | 他のディレクティブで許可しない限り、すべての読み込みを拒否します。 |
+| `img-src` | Webview ローカルソースと `data:` | 書き換え後のローカル画像と空のプレースホルダー画像だけを許可します。 |
+| `font-src` | Webview ローカルソース | 同梱 MathJax フォントだけを読み込みます。 |
+| `style-src` | Webview ローカルソースとインラインスタイル | 同梱プレビュー CSS とドキュメントスコープのスタイルを許可します。 |
+| `script-src` | Webview ローカルソース、nonce、WASM eval | 同梱レンダラースクリプトと nonce 付き初期化コードだけを実行します。 |
+| `connect-src` | 未設定 | `default-src 'none'` によりネットワーク接続を拒否したままにします。 |
 
 ## Commands
 
