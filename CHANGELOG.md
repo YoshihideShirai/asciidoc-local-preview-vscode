@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-06-13
+
+- Improve coexistence with asciidoctor-vscode by avoiding AsciiDoc language contribution conflicts.
+- Use Mermaid's default theme for diagram previews.
+- Fix README badge packaging for VS Code Marketplace.
+- Simplify README differentiation guidance.
+
 ## [0.0.3] - 2026-06-13
 
 - Add AsciiDoc syntax highlighting and language configuration.
