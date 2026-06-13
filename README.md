@@ -27,7 +27,7 @@ Ideal for:
 - Draws Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield diagrams from bundled local assets.
 - Adds common AsciiDoc editing commands for bold, italic, monospace, links, headings, and unordered lists.
 - Coexists with `asciidoctor/asciidoctor-vscode` by leaving AsciiDoc language support, grammar, snippets, and file icons to that extension.
-- Keeps the preview path independent of CDNs, Kroki servers, and remote image loading.
+- Keeps the preview path independent of CDNs, Kroki servers, and remote image loading unless image hosts are explicitly allowlisted.
 
 
 ## Differentiators
@@ -65,6 +65,21 @@ The preview registers these Asciidoctor.js extensions before converting each doc
 3. You can also open the preview from the editor title menu or editor context menu.
 
 The preview follows changes in the active editor. If the Webview needs to be redrawn manually, run **AsciiDoc: Refresh Preview**.
+
+## Remote Image Hosts
+
+Remote images are blocked by default. To allow specific hosts in the preview, set `asciidoc-local-preview.allowedPreviewHosts` in VS Code settings:
+
+```json
+{
+  "asciidoc-local-preview.allowedPreviewHosts": [
+    "example.com",
+    "https://images.example.org"
+  ]
+}
+```
+
+Host-only entries allow both `https` and `http` images for that exact host. Scheme-qualified entries allow only that scheme. Paths, wildcards, credentials, queries, and fragments are ignored as invalid setting entries.
 
 ## Supported Diagrams
 
@@ -149,7 +164,7 @@ The preview path uses these controls:
 
 - Asciidoctor.js runs in the extension host with `safe: 'safe'`.
 - `allow-uri-read` is explicitly disabled during conversion.
-- Remote image URLs are replaced with an empty local data image before rendering.
+- Remote image URLs are replaced with an empty local data image before rendering unless their exact host is listed in `asciidoc-local-preview.allowedPreviewHosts`.
 - Webview `localResourceRoots` are limited to the extension directory, workspace folders, and the current document directory.
 - CSS, MathJax, Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield load from bundled files under `media`.
 - PlantUML rendering does not require Java, Graphviz, or a Kroki server.
@@ -181,7 +196,7 @@ The Webview starts from `default-src 'none'` and then opens only the sources req
 | Directive | Policy | Reason |
 | --- | --- | --- |
 | `default-src` | `'none'` | Deny all loading unless another directive allows it. |
-| `img-src` | Webview local source plus `data:` | Allow rewritten local images and the empty placeholder image. |
+| `img-src` | Webview local source, `data:`, plus allowlisted remote image hosts | Allow rewritten local images, the empty placeholder image, and explicitly allowed remote images. |
 | `font-src` | Webview local source | Load bundled MathJax fonts only. |
 | `style-src` | Webview local source plus inline styles | Load bundled preview CSS and document-scoped styles. |
 | `script-src` | Webview local source plus a nonce and WASM eval | Run only bundled renderer scripts and nonce-marked bootstrapping code. |

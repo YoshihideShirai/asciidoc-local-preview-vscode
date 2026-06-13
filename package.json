@@ -107,6 +107,21 @@
           "group": "1_modification"
         }
       ]
+    },
+    "configuration": {
+      "title": "AsciiDoc Zero-Network Preview",
+      "properties": {
+        "asciidoc-local-preview.allowedPreviewHosts": {
+          "type": "array",
+          "default": [],
+          "scope": "resource",
+          "items": {
+            "type": "string",
+            "pattern": "^(https?://)?[^\\s*/?#]+$"
+          },
+          "markdownDescription": "Hosts that remote preview images may load from. Entries may be host names like `example.com`; an `http` or `https` scheme may be included to restrict the allowed scheme. Empty by default, so remote images are blocked."
+        }
+      }
     }
   },
   "scripts": {
