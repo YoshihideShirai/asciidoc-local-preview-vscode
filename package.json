@@ -2,7 +2,7 @@
   "name": "asciidoc-local-preview",
   "displayName": "AsciiDoc Zero-Network Preview",
   "description": "Local AsciiDoc preview for VS Code with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams.",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "publisher": "YoshihideShirai",
   "license": "MIT",
   "icon": "media/extension-icon.png",
@@ -13,6 +13,17 @@
   "engines": {
     "vscode": "^1.120.0"
   },
+  "activationEvents": [
+    "onLanguage:asciidoc",
+    "onCommand:asciidoc-local-preview.openPreview",
+    "onCommand:asciidoc-local-preview.refreshPreview",
+    "onCommand:asciidoc-local-preview.toggleBold",
+    "onCommand:asciidoc-local-preview.toggleItalic",
+    "onCommand:asciidoc-local-preview.toggleMonospace",
+    "onCommand:asciidoc-local-preview.insertLink",
+    "onCommand:asciidoc-local-preview.insertHeading",
+    "onCommand:asciidoc-local-preview.insertUnorderedList"
+  ],
   "categories": [
     "Programming Languages",
     "Visualization"
