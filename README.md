@@ -39,6 +39,18 @@ AsciiDoc Zero-Network Preview is narrower than `asciidoctor/asciidoctor-vscode`:
 
 AsciiDoc Zero-Network Preview does not contribute its own `asciidoc` language definition or TextMate grammar. If you want syntax highlighting, snippets, file associations, PDF export, or broader authoring support, install `asciidoctor/asciidoctor-vscode` alongside this extension.
 
+## Built-in Asciidoctor.js Extensions
+
+The preview registers these Asciidoctor.js extensions before converting each document:
+
+| Extension | Syntax / target | Purpose |
+| --- | --- | --- |
+| Diagram block processor | `[mermaid]`, `[plantuml]`, `[nomnoml]`, `[vega]`, `[vegalite]`, `[wavedrom]`, `[bytefield]` | Converts diagram blocks into local Webview render targets. |
+| Diagram block macro processor | `mermaid::path[]`, `plantuml::path[]`, and matching diagram macros | Reads local diagram source files relative to the document directory. |
+| Diagram literal preprocessor | `[mermaid] ....` and matching diagram literal blocks | Normalizes literal diagram blocks so they render through the same local pipeline. |
+| Emoji inline macro processor | `emoji:name[]` | Renders `asciidoctor-emoji` compatible inline macros as local Unicode emoji. |
+| Numbered captions tree processor | image, table, and stem blocks | Applies `asciidoctor-numbered-captions` chapter-aware caption numbering. |
+
 ## Getting Started
 
 1. Open an AsciiDoc file in VS Code.
