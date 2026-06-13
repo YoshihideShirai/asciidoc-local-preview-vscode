@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-13
+
+- [#18](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/18) [codex] Allow workspace preview images
+- [#19](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/19) [codex] allow preview image host whitelist
+
 ## [0.0.5] - 2026-06-13
 
 - Add chapter-aware figure, table, and equation caption numbering via `asciidoctor-numbered-captions`.
