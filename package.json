@@ -1,6 +1,6 @@
 {
   "name": "asciidoc-local-preview",
-  "displayName": "AsciiDoc Local Preview",
+  "displayName": "AsciiDoc Zero-Network Preview",
   "description": "Local AsciiDoc preview for VS Code with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams.",
   "version": "0.0.4",
   "publisher": "YoshihideShirai",
@@ -32,7 +32,7 @@
     "commands": [
       {
         "command": "asciidoc-local-preview.openPreview",
-        "title": "Open Local AsciiDoc Preview",
+        "title": "Open Zero-Network Preview",
         "category": "AsciiDoc",
         "icon": "$(open-preview)"
       },
