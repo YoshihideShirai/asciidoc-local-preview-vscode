@@ -133,22 +133,59 @@ To use Asciidoctor's standard caption numbering for a document, add this header 
 
 ## Local Preview Boundary
 
-AsciiDoc Zero-Network Preview is designed to preview local documentation without sending document contents to external services.
+AsciiDoc Zero-Network Preview is designed so local preview does not send document contents to CDNs, Kroki servers, remote image hosts, or other external services. The boundary is enforced in several layers instead of relying on a single "secure by intent" claim.
 
-- Asciidoctor.js runs inside the extension host.
-- `allow-uri-read` is explicitly disabled.
-- The Webview CSP uses `default-src 'none'`.
+```mermaid
+flowchart LR
+  A[Unsaved AsciiDoc buffer] --> B[Asciidoctor.js in extension host]
+  B --> C[HTML rewrite layer]
+  C --> D[VS Code Webview]
+  D --> E[Bundled media assets]
+  D -. blocked by CSP and guards .-> F[CDNs / Kroki / remote hosts]
+  C -. remote image URL .-> G[Empty local data image]
+```
+
+The preview path uses these controls:
+
+- Asciidoctor.js runs in the extension host with `safe: 'safe'`.
+- `allow-uri-read` is explicitly disabled during conversion.
 - Remote image URLs are replaced with an empty local data image before rendering.
-- CSS, MathJax, Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield are loaded from bundled files under `media`.
+- Webview `localResourceRoots` are limited to the extension directory and the current document directory.
+- CSS, MathJax, Mermaid, PlantUML, Nomnoml, Vega, Vega-Lite, WaveDrom, and Bytefield load from bundled files under `media`.
 - PlantUML rendering does not require Java, Graphviz, or a Kroki server.
 
-Before publishing or accepting generated changes, you can run the no-network verification script.
+### No-network verification
+
+Before publishing or accepting generated changes, run the no-network audit:
 
 ```sh
 npm run verify:no-network
 ```
 
-This check also runs automatically before `npm test`.
+The script fails on common regression patterns in extension-controlled code:
+
+- Browser network APIs such as `fetch`, `XMLHttpRequest`, `WebSocket`, and `EventSource`.
+- Node network module imports such as `http`, `https`, `net`, `tls`, `dns`, and related modules.
+- Process execution APIs such as `child_process`, `spawn`, and `exec`.
+- Remote URL literals in runtime code.
+- CSP directives that allow remote `http`, `https`, `wss`, or wildcard sources.
+- `allow-uri-read: true` or `safe: 'unsafe'` in Asciidoctor conversion.
+- Runtime dependencies outside the local-preview allowlist.
+
+The audit also checks that vendored preview libraries are protected by Webview guards for `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`, and `navigator.sendBeacon`. This check runs automatically before `npm test`.
+
+### CSP design
+
+The Webview starts from `default-src 'none'` and then opens only the sources required for local rendering.
+
+| Directive | Policy | Reason |
+| --- | --- | --- |
+| `default-src` | `'none'` | Deny all loading unless another directive allows it. |
+| `img-src` | Webview local source plus `data:` | Allow rewritten local images and the empty placeholder image. |
+| `font-src` | Webview local source | Load bundled MathJax fonts only. |
+| `style-src` | Webview local source plus inline styles | Load bundled preview CSS and document-scoped styles. |
+| `script-src` | Webview local source plus a nonce and WASM eval | Run only bundled renderer scripts and nonce-marked bootstrapping code. |
+| `connect-src` | Not set | Keep network connections denied by `default-src 'none'`. |
 
 ## Commands
 
