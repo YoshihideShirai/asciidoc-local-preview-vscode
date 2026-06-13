@@ -5,7 +5,7 @@
 :toc:
 :sectanchors:
 
-This file exercises the local preview features in AsciiDoc Local Preview.
+This file exercises the local preview features in AsciiDoc Zero-Network Preview.
 
 == Basic AsciiDoc
 

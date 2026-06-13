@@ -1,4 +1,4 @@
-# AsciiDoc Local Preview
+# AsciiDoc Zero-Network Preview
 
 [![Version](https://vsmarketplacebadges.dev/version-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
 [![Installs](https://vsmarketplacebadges.dev/installs-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
@@ -8,7 +8,7 @@
 
 Visual Studio Code で AsciiDoc をローカルプレビューするための拡張機能です。編集中の `.adoc` / `.ad` / `.asciidoc` / `.asc` ファイルを VS Code 内の Webview に表示し、MathJax、Mermaid、PlantUML、Kroki 互換の図表も外部サービスなしで確認できます。
 
-![AsciiDoc Local Preview demo](media/preview.gif)
+![AsciiDoc Zero-Network Preview demo](media/preview.gif)
 
 ## Highlights
 
@@ -24,9 +24,9 @@ Visual Studio Code で AsciiDoc をローカルプレビューするための拡
 
 ## 差別化ポイント
 
-AsciiDoc Local Preview は、`asciidoctor/asciidoctor-vscode` よりも「ローカルで安全にプレビューすること」に絞った拡張です。
+AsciiDoc Zero-Network Preview は、`asciidoctor/asciidoctor-vscode` よりも「ローカルで安全にプレビューすること」に絞った拡張です。
 
-| 観点 | AsciiDoc Local Preview | `asciidoctor/asciidoctor-vscode` |
+| 観点 | AsciiDoc Zero-Network Preview | `asciidoctor/asciidoctor-vscode` |
 | --- | --- | --- |
 | 目的 | ローカルプレビュー特化 | AsciiDoc 総合支援 |
 | 図表 | 主要図表を同梱アセットで描画 | Kroki 連携で幅広く対応 |
@@ -36,12 +36,12 @@ AsciiDoc Local Preview は、`asciidoctor/asciidoctor-vscode` よりも「ロー
 | 出力 | なし | PDF / HTML / DocBook |
 | 向く用途 | 機密文書・オフライン確認 | 変換や出力まで行う制作環境 |
 
-AsciiDoc Local Preview は独自の `asciidoc` 言語定義や TextMate grammar を登録しません。シンタックスハイライト、スニペット、ファイル関連付け、PDF 出力などの制作支援が必要な場合は、`asciidoctor/asciidoctor-vscode` と併用してください。
+AsciiDoc Zero-Network Preview は独自の `asciidoc` 言語定義や TextMate grammar を登録しません。シンタックスハイライト、スニペット、ファイル関連付け、PDF 出力などの制作支援が必要な場合は、`asciidoctor/asciidoctor-vscode` と併用してください。
 
 ## Getting Started
 
 1. VS Code で AsciiDoc ファイルを開きます。
-2. コマンドパレットから **AsciiDoc: Open Local AsciiDoc Preview** を実行します。
+2. コマンドパレットから **AsciiDoc: Open Zero-Network Preview** を実行します。
 3. エディタータイトルまたはコンテキストメニューからもプレビューを開けます。
 
 プレビューは編集中の内容に追従します。必要な場合は **AsciiDoc: Refresh Preview** で Webview を再描画できます。
@@ -103,7 +103,7 @@ I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
 
 ## Local Preview Boundary
 
-AsciiDoc Local Preview は、ドキュメント内容を外部サービスへ送らずにプレビューすることを目指しています。
+AsciiDoc Zero-Network Preview は、ドキュメント内容を外部サービスへ送らずにプレビューすることを目指しています。
 
 - Asciidoctor.js は拡張ホスト内で実行されます。
 - `allow-uri-read` は明示的に無効化されています。
@@ -122,7 +122,7 @@ npm run verify:no-network
 
 ## Commands
 
-- **AsciiDoc: Open Local AsciiDoc Preview**
+- **AsciiDoc: Open Zero-Network Preview**
 - **AsciiDoc: Refresh Preview**
 - **AsciiDoc: Bold**
 - **AsciiDoc: Italic**

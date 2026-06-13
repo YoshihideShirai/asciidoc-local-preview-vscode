@@ -1,4 +1,4 @@
-# AsciiDoc Local Preview
+# AsciiDoc Zero-Network Preview
 
 [![Version](https://vsmarketplacebadges.dev/version-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
 [![Installs](https://vsmarketplacebadges.dev/installs-short/YoshihideShirai.asciidoc-local-preview.png)](https://marketplace.visualstudio.com/items?itemName=YoshihideShirai.asciidoc-local-preview)
@@ -6,9 +6,9 @@
 
 English | [日本語](README.ja.md)
 
-AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc files locally. It renders the active `.adoc`, `.ad`, `.asciidoc`, or `.asc` editor buffer in a VS Code Webview, with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams available without external services.
+AsciiDoc Zero-Network Preview is a Visual Studio Code extension for previewing AsciiDoc files locally. It renders the active `.adoc`, `.ad`, `.asciidoc`, or `.asc` editor buffer in a VS Code Webview, with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams available without external services.
 
-![AsciiDoc Local Preview demo](media/preview.gif)
+![AsciiDoc Zero-Network Preview demo](media/preview.gif)
 
 ## Highlights
 
@@ -24,9 +24,9 @@ AsciiDoc Local Preview is a Visual Studio Code extension for previewing AsciiDoc
 
 ## Differentiators
 
-AsciiDoc Local Preview is narrower than `asciidoctor/asciidoctor-vscode`: it focuses on safe local preview.
+AsciiDoc Zero-Network Preview is narrower than `asciidoctor/asciidoctor-vscode`: it focuses on safe local preview.
 
-| Area | AsciiDoc Local Preview | `asciidoctor/asciidoctor-vscode` |
+| Area | AsciiDoc Zero-Network Preview | `asciidoctor/asciidoctor-vscode` |
 | --- | --- | --- |
 | Focus | Local preview | Full AsciiDoc authoring |
 | Diagrams | Bundled local renderers | Broad Kroki support |
@@ -36,12 +36,12 @@ AsciiDoc Local Preview is narrower than `asciidoctor/asciidoctor-vscode`: it foc
 | Export | None | PDF / HTML / DocBook |
 | Best for | Confidential or offline checks | Conversion and publishing |
 
-AsciiDoc Local Preview does not contribute its own `asciidoc` language definition or TextMate grammar. If you want syntax highlighting, snippets, file associations, PDF export, or broader authoring support, install `asciidoctor/asciidoctor-vscode` alongside this extension.
+AsciiDoc Zero-Network Preview does not contribute its own `asciidoc` language definition or TextMate grammar. If you want syntax highlighting, snippets, file associations, PDF export, or broader authoring support, install `asciidoctor/asciidoctor-vscode` alongside this extension.
 
 ## Getting Started
 
 1. Open an AsciiDoc file in VS Code.
-2. Run **AsciiDoc: Open Local AsciiDoc Preview** from the Command Palette.
+2. Run **AsciiDoc: Open Zero-Network Preview** from the Command Palette.
 3. You can also open the preview from the editor title menu or editor context menu.
 
 The preview follows changes in the active editor. If the Webview needs to be redrawn manually, run **AsciiDoc: Refresh Preview**.
@@ -103,7 +103,7 @@ Supported emoji sizes include `1x`, `lg`, `2x`, `3x`, `4x`, `5x`, and explicit p
 
 ## Local Preview Boundary
 
-AsciiDoc Local Preview is designed to preview local documentation without sending document contents to external services.
+AsciiDoc Zero-Network Preview is designed to preview local documentation without sending document contents to external services.
 
 - Asciidoctor.js runs inside the extension host.
 - `allow-uri-read` is explicitly disabled.
@@ -122,7 +122,7 @@ This check also runs automatically before `npm test`.
 
 ## Commands
 
-- **AsciiDoc: Open Local AsciiDoc Preview**
+- **AsciiDoc: Open Zero-Network Preview**
 - **AsciiDoc: Refresh Preview**
 - **AsciiDoc: Bold**
 - **AsciiDoc: Italic**

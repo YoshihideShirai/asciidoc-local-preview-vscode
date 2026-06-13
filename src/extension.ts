@@ -25,7 +25,7 @@ type AsciiDoctorExtensionRegistry = {
 };
 
 export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel('AsciiDoc Local Preview');
+	outputChannel = vscode.window.createOutputChannel('AsciiDoc Zero-Network Preview');
 	trace('activate');
 
 	context.subscriptions.push(
