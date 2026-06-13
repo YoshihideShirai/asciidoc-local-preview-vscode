@@ -12,4 +12,13 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
 		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
 	});
+
+	test('Open preview command renders an AsciiDoc document', async () => {
+		const document = await vscode.workspace.openTextDocument({
+			content: '= Test\n\nHello from AsciiDoc.',
+			language: 'asciidoc',
+		});
+		await vscode.window.showTextDocument(document);
+		await vscode.commands.executeCommand('asciidoc-local-preview.openPreview');
+	});
 });

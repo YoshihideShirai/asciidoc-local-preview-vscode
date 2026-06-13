@@ -1,14 +1,28 @@
-import asciidoctorFactory from 'asciidoctor';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { emojiMap } from './emoji-map';
 
-const asciidoctor = asciidoctorFactory();
 const previewPanels = new Map<string, AsciiDocPreviewPanel>();
 let outputChannel: vscode.OutputChannel | undefined;
+let asciidoctor: AsciiDoctorProcessor | undefined;
 const diagramBlockNames = ['mermaid', 'plantuml', 'nomnoml', 'vega', 'vegalite', 'wavedrom', 'bytefield'];
 const livePreviewUpdateDelayMs = 150;
+
+type AsciiDoctorProcessor = {
+	convert(input: string | Buffer, options?: Record<string, unknown>): string | object;
+	Extensions: {
+		create(): AsciiDoctorExtensionRegistry;
+	};
+};
+
+type AsciiDoctorFactory = () => AsciiDoctorProcessor;
+type AsciiDoctorExtensionRegistry = {
+	preprocessor(callback: (this: any) => void): void;
+	block(name: string, callback: (this: any) => void): void;
+	blockMacro(name: string, callback: (this: any) => void): void;
+	inlineMacro(name: string, callback: (this: any) => void): void;
+};
 
 export function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel('AsciiDoc Local Preview');
@@ -35,10 +49,10 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function createAsciiDocExtensions() {
-	const registry = asciidoctor.Extensions.create();
+	const registry = getAsciiDoctor().Extensions.create();
 
-	registry.preprocessor(function () {
-		this.process(function (_document, reader) {
+	registry.preprocessor(function (this: any) {
+		this.process(function (_document: any, reader: any) {
 			return reader.pushInclude(rewriteLiteralDiagramBlockStyles(reader.readLines()));
 		});
 	});
@@ -54,10 +68,10 @@ function createAsciiDocExtensions() {
 	return registry;
 }
 
-function registerDiagramBlock(registry: ReturnType<typeof asciidoctor.Extensions.create>, blockName: string, context: string, diagramType = blockName) {
-	registry.block(blockName, function () {
+function registerDiagramBlock(registry: AsciiDoctorExtensionRegistry, blockName: string, context: string, diagramType = blockName) {
+	registry.block(blockName, function (this: any) {
 		this.onContext(context);
-		this.process(function (parent, reader) {
+		this.process(function (this: any, parent: any, reader: any) {
 			const source = reader.getLines().join('\n');
 
 			return this.createBlock(parent, 'pass', renderDiagramBlock(diagramType, source));
@@ -65,9 +79,9 @@ function registerDiagramBlock(registry: ReturnType<typeof asciidoctor.Extensions
 	});
 }
 
-function registerDiagramMacro(registry: ReturnType<typeof asciidoctor.Extensions.create>, diagramType: string) {
-	registry.blockMacro(diagramType, function () {
-		this.process(function (parent, target) {
+function registerDiagramMacro(registry: AsciiDoctorExtensionRegistry, diagramType: string) {
+	registry.blockMacro(diagramType, function (this: any) {
+		this.process(function (this: any, parent: any, target: string) {
 			const source = readLocalDiagramSource(diagramType, parent.getDocument().getBaseDir(), target);
 
 			return this.createBlock(parent, 'pass', source.ok
@@ -77,10 +91,10 @@ function registerDiagramMacro(registry: ReturnType<typeof asciidoctor.Extensions
 	});
 }
 
-function registerEmojiMacro(registry: ReturnType<typeof asciidoctor.Extensions.create>) {
-	registry.inlineMacro('emoji', function () {
+function registerEmojiMacro(registry: AsciiDoctorExtensionRegistry) {
+	registry.inlineMacro('emoji', function (this: any) {
 		this.positionalAttributes('size');
-		this.process(function (parent, target, attrs) {
+		this.process(function (this: any, parent: any, target: string, attrs: { size?: string }) {
 			const emoji = renderEmoji(target, attrs.size);
 
 			return this.createInlinePass(parent, emoji);
@@ -109,6 +123,17 @@ export function deactivate() {
 		panel.dispose();
 	}
 	previewPanels.clear();
+}
+
+function getAsciiDoctor(): AsciiDoctorProcessor {
+	if (asciidoctor) {
+		return asciidoctor;
+	}
+
+	const asciidoctorFactory = require('@asciidoctor/core') as AsciiDoctorFactory;
+	asciidoctor = asciidoctorFactory();
+
+	return asciidoctor;
 }
 
 function openPreview(extensionUri: vscode.Uri) {
@@ -798,8 +823,9 @@ class AsciiDocPreviewPanel {
 
 function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview): string {
 	try {
+		const processor = getAsciiDoctor();
 		const extensionRegistry = createAsciiDocExtensions();
-		const converted = asciidoctor.convert(document.getText(), {
+		const converted = processor.convert(document.getText(), {
 			safe: 'safe',
 			backend: 'html5',
 			standalone: false,
@@ -817,6 +843,10 @@ function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.Webview)
 		return rewriteSourceDiagramBlocks(rewriteLocalImageUris(String(converted), document, webview));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
+		trace('preview conversion failed', {
+			message,
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 
 		return `<h1>Preview failed</h1><pre><code>${escapeHtml(message)}</code></pre>`;
 	}

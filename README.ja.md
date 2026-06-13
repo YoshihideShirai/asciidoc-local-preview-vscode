@@ -18,7 +18,7 @@ Visual Studio Code で AsciiDoc をローカルプレビューするための拡
 - `emoji:name[]` 形式の絵文字インラインマクロをローカルの Unicode 文字として表示します。
 - Mermaid、PlantUML、Nomnoml、Vega、Vega-Lite、WaveDrom、Bytefield の図表をローカルアセットで描画します。
 - 太字、斜体、等幅、リンク、見出し、箇条書きなど、よく使う AsciiDoc 編集コマンドを追加します。
-- ドキュメントヘッダー、ソースブロック、admonition、表などのスニペットを提供します。
+- AsciiDoc の言語サポート、文法、スニペット、ファイルアイコンは `asciidoctor/asciidoctor-vscode` に任せることで共存しやすくしています。
 - CDN、Kroki サーバー、外部画像読み込みに依存しないプレビュー経路を重視しています。
 
 
@@ -35,6 +35,8 @@ AsciiDoc Local Preview は、`asciidoctor/asciidoctor-vscode` よりも「ロー
 | 数式・絵文字 | MathJax / emoji を同梱対応 | 拡張で追加可能 |
 | 出力 | なし | PDF / HTML / DocBook |
 | 向く用途 | 機密文書・オフライン確認 | 変換や出力まで行う制作環境 |
+
+AsciiDoc Local Preview は独自の `asciidoc` 言語定義や TextMate grammar を登録しません。シンタックスハイライト、スニペット、ファイル関連付け、PDF 出力などの制作支援が必要な場合は、`asciidoctor/asciidoctor-vscode` と併用してください。
 
 ## Getting Started
 
