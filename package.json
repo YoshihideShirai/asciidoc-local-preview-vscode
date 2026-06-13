@@ -17,16 +17,6 @@
     "Programming Languages",
     "Visualization"
   ],
-  "activationEvents": [
-    "onCommand:asciidoc-local-preview.openPreview",
-    "onCommand:asciidoc-local-preview.refreshPreview",
-    "onCommand:asciidoc-local-preview.toggleBold",
-    "onCommand:asciidoc-local-preview.toggleItalic",
-    "onCommand:asciidoc-local-preview.toggleMonospace",
-    "onCommand:asciidoc-local-preview.insertLink",
-    "onCommand:asciidoc-local-preview.insertHeading",
-    "onCommand:asciidoc-local-preview.insertUnorderedList"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
