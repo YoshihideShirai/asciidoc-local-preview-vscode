@@ -8,6 +8,13 @@
 
 Visual Studio Code で AsciiDoc をローカルプレビューするための拡張機能です。編集中の `.adoc` / `.ad` / `.asciidoc` / `.asc` ファイルを VS Code 内の Webview に表示し、MathJax、Mermaid、PlantUML、Kroki 互換の図表も外部サービスなしで確認できます。
 
+次のような環境に向いています:
+
+- 企業内のドキュメント環境
+- インターネット接続を制限したネットワーク
+- セキュリティ要件の高い文書作成
+- 外部サービスの利用を禁止している組織
+
 ![AsciiDoc Zero-Network Preview demo](media/preview.gif)
 
 ## Highlights

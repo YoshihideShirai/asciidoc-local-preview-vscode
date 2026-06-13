@@ -8,6 +8,13 @@ English | [日本語](README.ja.md)
 
 AsciiDoc Zero-Network Preview is a Visual Studio Code extension for previewing AsciiDoc files locally. It renders the active `.adoc`, `.ad`, `.asciidoc`, or `.asc` editor buffer in a VS Code Webview, with MathJax, Mermaid, PlantUML, and Kroki-compatible diagrams available without external services.
 
+Ideal for:
+
+- Corporate environments
+- Air-gapped networks
+- Security-sensitive documentation
+- Organizations that prohibit external services
+
 ![AsciiDoc Zero-Network Preview demo](media/preview.gif)
 
 ## Highlights
