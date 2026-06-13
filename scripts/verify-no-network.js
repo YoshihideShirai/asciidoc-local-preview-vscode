@@ -14,6 +14,7 @@ const scanTargets = [
 
 const allowedRuntimeDependencies = new Set([
 	'@asciidoctor/core',
+	'asciidoctor-numbered-captions',
 ]);
 
 const blockedPatterns = [
@@ -316,7 +317,10 @@ function verifyRuntimeDependencies() {
 function isAllowedPackageMetadataUrl(rel, blockedName, line) {
 	return rel === 'package.json'
 		&& blockedName === 'remote URL literal in extension-controlled code'
-		&& /"url"\s*:\s*"https:\/\/github\.com\/YoshihideShirai\/asciidoc-local-preview-vscode\.git"/.test(line);
+		&& (
+			/"url"\s*:\s*"https:\/\/github\.com\/YoshihideShirai\/asciidoc-local-preview-vscode\.git"/.test(line)
+			|| /"asciidoctor-numbered-captions"\s*:\s*"git\+https:\/\/github\.com\/YoshihideShirai\/asciidoctor-numbered-captions\.git#v1\.0\.0"/.test(line)
+		);
 }
 
 function verifyVendoredFiles() {

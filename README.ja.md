@@ -15,6 +15,7 @@ Visual Studio Code で AsciiDoc をローカルプレビューするための拡
 - 編集中の未保存バッファをそのままプレビューに反映します。
 - Asciidoctor.js による AsciiDoc プレビューを VS Code 内で実行します。
 - MathJax による `stem` / `latexmath` の数式表示に対応しています。
+- 図、表、式のキャプションを章番号付きで採番します。
 - `emoji:name[]` 形式の絵文字インラインマクロをローカルの Unicode 文字として表示します。
 - Mermaid、PlantUML、Nomnoml、Vega、Vega-Lite、WaveDrom、Bytefield の図表をローカルアセットで描画します。
 - 太字、斜体、等幅、リンク、見出し、箇条書きなど、よく使う AsciiDoc 編集コマンドを追加します。
@@ -100,6 +101,16 @@ I emoji:heart[1x] Asciidoctor.js emoji:tada[2x]
 ```
 
 `1x`、`lg`、`2x`、`3x`、`4x`、`5x`、`42px` のようなサイズ指定に対応しています。絵文字は CDN から SVG を読み込まず、ローカルで Unicode 文字として表示します。
+
+## Numbered Captions
+
+図、表、式のキャプションは `asciidoctor-numbered-captions` により、`Figure 1-1`、`Table 2-3`、`Equation 4-2` のように章番号を含めて採番されます。
+
+文書ごとに Asciidoctor 標準のキャプション採番へ戻したい場合は、ヘッダー属性を追加してください。
+
+```asciidoc
+:numbered-captions-numbering: standard
+```
 
 ## Local Preview Boundary
 

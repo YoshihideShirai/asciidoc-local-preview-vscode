@@ -17,8 +17,12 @@ type AsciiDoctorProcessor = {
 };
 
 type AsciiDoctorFactory = () => AsciiDoctorProcessor;
+type NumberedCaptionsExtension = {
+	register(registry: AsciiDoctorExtensionRegistry, options?: Record<string, unknown>): void;
+};
 type AsciiDoctorExtensionRegistry = {
 	preprocessor(callback: (this: any) => void): void;
+	treeProcessor(callback: (this: any) => void): void;
 	block(name: string, callback: (this: any) => void): void;
 	blockMacro(name: string, callback: (this: any) => void): void;
 	inlineMacro(name: string, callback: (this: any) => void): void;
@@ -64,8 +68,17 @@ function createAsciiDocExtensions() {
 	}
 
 	registerEmojiMacro(registry);
+	registerNumberedCaptions(registry);
 
 	return registry;
+}
+
+function registerNumberedCaptions(registry: AsciiDoctorExtensionRegistry) {
+	const numberedCaptions = require('asciidoctor-numbered-captions') as NumberedCaptionsExtension;
+
+	numberedCaptions.register(registry, {
+		defaultNumbering: 'chaptered',
+	});
 }
 
 function registerDiagramBlock(registry: AsciiDoctorExtensionRegistry, blockName: string, context: string, diagramType = blockName) {
