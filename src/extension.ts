@@ -874,11 +874,27 @@ function getBaseDir(document: vscode.TextDocument): string | undefined {
 }
 
 function getLocalResourceRoots(extensionUri: vscode.Uri, document: vscode.TextDocument): vscode.Uri[] {
+	const roots = [extensionUri, ...(vscode.workspace.workspaceFolders?.map((folder) => folder.uri) ?? [])];
+
 	if (document.uri.scheme === 'file') {
-		return [extensionUri, vscode.Uri.file(path.dirname(document.uri.fsPath))];
+		roots.push(vscode.Uri.file(path.dirname(document.uri.fsPath)));
 	}
 
-	return [extensionUri, ...(vscode.workspace.workspaceFolders?.map((folder) => folder.uri) ?? [])];
+	return uniqueUris(roots);
+}
+
+function uniqueUris(uris: vscode.Uri[]): vscode.Uri[] {
+	const seen = new Set<string>();
+
+	return uris.filter((uri) => {
+		const key = uri.toString();
+		if (seen.has(key)) {
+			return false;
+		}
+
+		seen.add(key);
+		return true;
+	});
 }
 
 function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webview: vscode.Webview): string {
