@@ -1,0 +1,4 @@
+interface:
+  display_name: "AsciiDoc Zero-Network Review"
+  short_description: "Review zero-network preview changes"
+  default_prompt: "Use $asciidoc-zero-network-review to review this PR for security, design, and zero-network preview regressions."
