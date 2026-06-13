@@ -8,6 +8,8 @@ let outputChannel: vscode.OutputChannel | undefined;
 let asciidoctor: AsciiDoctorProcessor | undefined;
 const diagramBlockNames = ['mermaid', 'plantuml', 'nomnoml', 'vega', 'vegalite', 'wavedrom', 'bytefield'];
 const livePreviewUpdateDelayMs = 150;
+const configurationSection = 'asciidoc-local-preview';
+const allowedPreviewHostsSetting = 'allowedPreviewHosts';
 
 type AsciiDoctorProcessor = {
 	convert(input: string | Buffer, options?: Record<string, unknown>): string | object;
@@ -197,6 +199,12 @@ type WebviewTraceMessage = {
 	event?: string;
 	data?: Record<string, unknown>;
 };
+type AllowedPreviewHost = {
+	host: string;
+	hostname: string;
+	port: string;
+	schemes: readonly string[];
+};
 
 function trace(event: string, data?: Record<string, unknown>) {
 	const suffix = data ? ` ${JSON.stringify(data)}` : '';
@@ -344,6 +352,7 @@ class AsciiDocPreviewPanel {
 	private render(document: vscode.TextDocument, body: string, renderId: string): string {
 		const nonce = getNonce();
 		const cspSource = this.panel.webview.cspSource;
+		const imageSources = getPreviewImageCspSources(cspSource).join(' ');
 		const antoraPreviewStyleUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'antora-default-preview.css'));
 		const mermaidScriptUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mermaid.min.js'));
 		const mathJaxBaseUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'mathjax'));
@@ -365,7 +374,7 @@ class AsciiDocPreviewPanel {
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} data:; font-src ${cspSource}; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${imageSources}; font-src ${cspSource}; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${escapeHtml(getDocumentTitle(document))}</title>
 	<link rel="stylesheet" href="${antoraPreviewStyleUri}">
@@ -907,8 +916,15 @@ function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webv
 		return html;
 	}
 
+	const allowedPreviewHosts = getAllowedPreviewHosts();
+
 	return html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/gi, (_match: string, before: string, src: string, after: string) => {
 		if (/^(?:https?:|ftp:|\/\/)/i.test(src)) {
+			const allowedRemoteSrc = getAllowedRemoteImageSrc(src, allowedPreviewHosts);
+			if (allowedRemoteSrc) {
+				return `${before}${allowedRemoteSrc}${after}`;
+			}
+
 			return `${before}${blockedImageUri()}${after}`;
 		}
 
@@ -922,6 +938,90 @@ function rewriteLocalImageUris(html: string, document: vscode.TextDocument, webv
 
 		return `${before}${webviewUri.toString()}${parsed.suffix}${after}`;
 	});
+}
+
+function getPreviewImageCspSources(cspSource: string): string[] {
+	return [
+		cspSource,
+		'data:',
+		...getAllowedPreviewHosts().flatMap((host) => host.schemes.map((scheme) => `${scheme}://${host.host}`)),
+	];
+}
+
+function getAllowedRemoteImageSrc(src: string, allowedHosts: AllowedPreviewHost[]): string | undefined {
+	const normalizedSrc = src.startsWith('//') ? `https:${src}` : src;
+	let url: URL;
+
+	try {
+		url = new URL(normalizedSrc);
+	} catch {
+		return undefined;
+	}
+
+	const scheme = url.protocol.slice(0, -1).toLowerCase();
+	if (scheme !== 'http' && scheme !== 'https') {
+		return undefined;
+	}
+
+	const hostname = url.hostname.toLowerCase();
+	const port = url.port;
+
+	for (const allowedHost of allowedHosts) {
+		if (allowedHost.hostname === hostname && allowedHost.port === port && allowedHost.schemes.includes(scheme)) {
+			return normalizedSrc;
+		}
+	}
+
+	return undefined;
+}
+
+function getAllowedPreviewHosts(): AllowedPreviewHost[] {
+	const values = vscode.workspace
+		.getConfiguration(configurationSection)
+		.get<string[]>(allowedPreviewHostsSetting, []);
+
+	return values.flatMap((value) => {
+		const host = parseAllowedPreviewHost(value);
+		if (!host) {
+			trace('preview allowed host ignored', { value });
+			return [];
+		}
+
+		return [host];
+	});
+}
+
+function parseAllowedPreviewHost(value: string): AllowedPreviewHost | undefined {
+	const trimmed = value.trim();
+	if (!trimmed || /[*\s]/.test(trimmed)) {
+		return undefined;
+	}
+
+	const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+	const valueAsUrl = hasScheme ? trimmed : `https:${'//'}${trimmed}`;
+	let url: URL;
+
+	try {
+		url = new URL(valueAsUrl);
+	} catch {
+		return undefined;
+	}
+
+	const scheme = url.protocol.slice(0, -1).toLowerCase();
+	if ((hasScheme && scheme !== 'http' && scheme !== 'https') || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+		return undefined;
+	}
+
+	const hostname = url.hostname.toLowerCase();
+	if (!hostname) {
+		return undefined;
+	}
+
+	const port = url.port;
+	const host = port ? `${hostname}:${port}` : hostname;
+	const schemes = hasScheme ? [scheme] : ['https', 'http'];
+
+	return { host, hostname, port, schemes };
 }
 
 function blockedImageUri(): string {
