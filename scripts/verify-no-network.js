@@ -323,7 +323,7 @@ function isAllowedPackageMetadataUrl(rel, blockedName, line) {
 		&& (
 			/"url"\s*:\s*"https:\/\/github\.com\/YoshihideShirai\/asciidoc-local-preview-vscode\.git"/.test(line)
 			|| /"asciidoctor-kroki-embedded"\s*:\s*"git\+https:\/\/github\.com\/YoshihideShirai\/asciidoctor-kroki-embedded\.git"/.test(line)
-			|| /"asciidoctor-numbered-captions"\s*:\s*"git\+https:\/\/github\.com\/YoshihideShirai\/asciidoctor-numbered-captions\.git#v1\.0\.0"/.test(line)
+			|| /"asciidoctor-numbered-captions"\s*:\s*"git\+https:\/\/github\.com\/YoshihideShirai\/asciidoctor-numbered-captions\.git#v2\.0\.0"/.test(line)
 		);
 }
 
