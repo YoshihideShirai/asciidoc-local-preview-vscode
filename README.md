@@ -131,6 +131,8 @@ Alice -> Bob : Hello
 ----
 ```
 
+Hover over a rendered diagram in the preview to reveal the **Save SVG** icon button in its top-right corner (also visible on keyboard focus). Click it to choose where to save a standalone SVG image, including Mermaid diagrams. The default filename is `<document>-diagram-<number>.svg` next to the AsciiDoc document. Only successfully rendered diagrams can be saved; saving is explicit and does not contact a server. The `:kroki-fetch-diagram:` attribute does not enable automatic exports.
+
 Supported diagram types:
 
 - Mermaid
