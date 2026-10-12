@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-12
+
+- [#44](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/44) Update npm dependencies and migrate to Asciidoctor 4
+- [#45](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/45) Add SVG export for locally rendered diagrams
+
 ## [0.6.1] - 2026-06-16
 
 - [#41](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/41) [codex] Fix VSIX packaging README SVG error
