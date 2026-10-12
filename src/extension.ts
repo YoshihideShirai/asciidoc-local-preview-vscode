@@ -192,7 +192,7 @@ function getAsciiDocDocument(editor: vscode.TextEditor | undefined): vscode.Text
 }
 
 type WebviewTraceMessage = {
-	type?: string;
+	type?: 'trace';
 	renderId?: string;
 	event?: string;
 	data?: Record<string, unknown>;
@@ -243,6 +243,7 @@ class AsciiDocPreviewPanel {
 	private document: vscode.TextDocument;
 	private pendingUpdate: ReturnType<typeof setTimeout> | undefined;
 	private renderSequence = 0;
+	private currentRenderId: string | undefined;
 	private disposed = false;
 
 	constructor(private readonly extensionUri: vscode.Uri, document: vscode.TextDocument) {
@@ -261,7 +262,11 @@ class AsciiDocPreviewPanel {
 
 		trace('preview panel created', getTraceDocumentDetails(document));
 		this.panel.onDidDispose(() => this.dispose(), undefined, this.disposables);
-		this.panel.webview.onDidReceiveMessage((message: WebviewTraceMessage) => {
+		this.panel.webview.onDidReceiveMessage((message: WebviewTraceMessage | { type: 'saveDiagram'; renderId: string; index: number; svg: string }) => {
+			if (message.type === 'saveDiagram') {
+				void this.saveDiagram(message);
+				return;
+			}
 			if (message.type !== 'trace') {
 				trace('webview message ignored', { messageType: message.type });
 				return;
@@ -316,6 +321,7 @@ class AsciiDocPreviewPanel {
 		this.cancelPendingUpdate();
 		this.document = document;
 		this.panel.title = `Preview: ${getDocumentTitle(document)}`;
+		this.currentRenderId = undefined;
 		this.renderSequence += 1;
 		const renderSequence = this.renderSequence;
 		const renderId = `${Date.now()}-${renderSequence}`;
@@ -332,6 +338,7 @@ class AsciiDocPreviewPanel {
 			bodyLength: body.length,
 			...countPreviewBlocks(body),
 		});
+		this.currentRenderId = renderId;
 		this.panel.webview.html = this.render(document, body, renderId);
 		trace('preview html assigned', { renderId });
 	}
@@ -375,6 +382,33 @@ class AsciiDocPreviewPanel {
 
 		while (this.disposables.length > 0) {
 			this.disposables.pop()?.dispose();
+		}
+	}
+
+	private async saveDiagram(message: { renderId: string; index: number; svg: string }) {
+		if (this.disposed || message.renderId !== this.currentRenderId
+			|| !Number.isSafeInteger(message.index) || message.index < 1
+			|| typeof message.svg !== 'string' || message.svg.length > 10 * 1024 * 1024
+			|| !message.svg.startsWith('<svg') || !message.svg.endsWith('</svg>')) {
+			return;
+		}
+		const documentUri = this.documentUri;
+		const basename = path.parse(getDocumentTitle(this.document)).name;
+		const filename = `${basename}-diagram-${message.index}.svg`;
+		try {
+			const target = await vscode.window.showSaveDialog({
+				defaultUri: documentUri.scheme === 'untitled' ? undefined
+					: vscode.Uri.joinPath(documentUri, '..', filename),
+				filters: { 'SVG image': ['svg'] },
+				saveLabel: 'Save diagram',
+			});
+			if (!target || this.disposed || message.renderId !== this.currentRenderId) {
+				return;
+			}
+			await vscode.workspace.fs.writeFile(target, Buffer.from(message.svg, 'utf8'));
+			void vscode.window.showInformationMessage(`Diagram saved: ${target.fsPath}`);
+		} catch (error) {
+			void vscode.window.showErrorMessage(`Unable to save diagram: ${String(error)}`);
 		}
 	}
 
@@ -439,6 +473,50 @@ class AsciiDocPreviewPanel {
 			margin: 0 auto;
 		}
 
+		.kroki-embedded {
+			position: relative;
+		}
+
+		.save-diagram {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 28px;
+			height: 28px;
+			padding: 5px;
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			background: var(--vscode-editor-background);
+			color: var(--vscode-editor-foreground);
+			cursor: pointer;
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		.kroki-embedded:hover > .save-diagram,
+		.kroki-embedded:focus-within > .save-diagram {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.save-diagram:hover {
+			background: var(--vscode-toolbar-hoverBackground);
+		}
+
+		.save-diagram:focus-visible {
+			outline: 2px solid var(--vscode-focusBorder);
+			outline-offset: 2px;
+		}
+
+		.kroki-embedded .save-diagram svg {
+			width: 16px;
+			height: 16px;
+			margin: 0;
+		}
+
 		.diagram-source,
 		.kroki-embedded-source {
 			display: none;
@@ -487,6 +565,33 @@ class AsciiDocPreviewPanel {
 				data
 			});
 		};
+
+		// Observe asynchronous renderers so each successfully rendered diagram gets an export button.
+		const addDiagramSaveButtons = () => {
+			for (const [index, diagram] of [...document.querySelectorAll('.kroki-embedded[data-diagram-type]')].entries()) {
+				const output = diagram.querySelector('.kroki-embedded-output');
+				if (!output || !output.querySelector('svg') || diagram.querySelector('.save-diagram')) {
+					continue;
+				}
+				const button = document.createElement('button');
+				button.className = 'save-diagram';
+				button.type = 'button';
+				button.title = 'Save SVG';
+				button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5"/></svg>';
+				button.setAttribute('aria-label', 'Save diagram ' + (index + 1) + ' as SVG');
+				button.addEventListener('click', () => {
+					const svg = output.querySelector('svg');
+					if (!svg) { return; }
+					const copy = svg.cloneNode(true);
+					copy.setAttribute('xmlns', svg.namespaceURI);
+					vscodeApi.postMessage({ type: 'saveDiagram', renderId: previewRenderId,
+						index: index + 1, svg: new XMLSerializer().serializeToString(copy) });
+				});
+				diagram.appendChild(button);
+			}
+		};
+		new MutationObserver(addDiagramSaveButtons).observe(document.body, { childList: true, subtree: true });
+		addDiagramSaveButtons();
 
 		window.addEventListener('error', (event) => {
 			tracePreview('window.error', {
