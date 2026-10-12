@@ -1050,7 +1050,7 @@ function renderEmoji(emojiMap, target, sizeAttr) {
 
 (async () => {
 	try {
-		const asciidoctor = requireFromExtension('@asciidoctor/core')();
+		const asciidoctor = requireFromExtension('@asciidoctor/core');
 		const krokiEmbeddedPath = requireFromExtension.resolve('asciidoctor-kroki-embedded');
 		const krokiEmbedded = await import(pathToFileURL(krokiEmbeddedPath).href);
 		const numberedCaptions = requireFromExtension('asciidoctor-numbered-captions');
@@ -1071,7 +1071,7 @@ function renderEmoji(emojiMap, target, sizeAttr) {
 			defaultNumbering: 'chaptered',
 		});
 
-		const html = asciidoctor.convert(workerData.source, {
+		const html = await asciidoctor.convert(workerData.source, {
 			safe: 'safe',
 			backend: 'html5',
 			standalone: false,
