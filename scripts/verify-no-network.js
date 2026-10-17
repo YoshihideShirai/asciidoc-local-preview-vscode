@@ -54,6 +54,16 @@ const blockedPatterns = [
 const expectedText = [
 	{
 		file: 'src/extension.ts',
+		text: "'allow-uri-read!': ''",
+		message: 'URI reads must be hard-disabled so document attributes cannot enable them.',
+	},
+	{
+		file: 'src/extension.ts',
+		text: "options.targetName === 'include file'",
+		message: 'Local path relaxation must be limited to include file resolution.',
+	},
+	{
+		file: 'src/extension.ts',
 		text: "'allow-uri-read': false",
 		message: 'Asciidoctor conversion must explicitly disable allow-uri-read.',
 	},

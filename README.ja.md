@@ -79,6 +79,12 @@ AsciiDoc Zero-Network Preview は独自の `asciidoc` 言語定義や TextMate g
 
 `default` に戻すと、幅を制限した既定の表示に戻ります。
 
+## ローカルファイルの include
+
+標準の `include::` は、デフォルトでドキュメントのディレクトリ外のローカルファイルも読み込めます。`include::../../proto/service.proto[]` のような親ディレクトリへの相対パスや絶対パスが利用できます。入れ子の include、タグ、行の選択は Asciidoctor の通常の処理に従います。リモート include は引き続きブロックされます。
+
+`asciidoc-local-preview.restrictLocalIncludes` を `true` にすると、標準のローカル include をドキュメントディレクトリ内に制限します。既定値の `false` は、標準のローカル include に対するディレクトリ制限を解除します。設定はリソース単位で指定でき、変更すると開いているプレビューに反映されます。Antora resource の解決は従来の component/module 境界を維持し、Asciidoctor が処理する標準 include はこの設定に従います。図表ファイルマクロと Webview resource roots の制限は従来どおりです。
+
 ## Antora プロジェクトのプレビュー
 
 開いているドキュメントが Antora component ディレクトリ内にある場合、Antora サイトジェネレーターやリモートサービスへ接続せずに、同じ component 内の Antora module resource を解決できます。拡張機能は `antora.yml` と `modules/` を持つディレクトリを component root として検出します。
