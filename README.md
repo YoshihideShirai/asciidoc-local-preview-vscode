@@ -79,6 +79,12 @@ The document preview uses the bundled Antora-style reading width by default. To 
 
 Set it back to `default` to restore the constrained reading width.
 
+## Local File Includes
+
+Standard `include::` directives can read local files outside the document directory by default, including parent-directory paths such as `include::../../proto/service.proto[]` and absolute local paths. Nested includes, tags, and line selection use Asciidoctor's normal include handling. Remote includes remain blocked.
+
+Set `asciidoc-local-preview.restrictLocalIncludes` to `true` to restrict standard local includes to the document directory. The default, `false`, allows standard local includes without that directory restriction. This resource-scoped setting refreshes open previews when changed. Antora resource references continue to use the existing component/module boundaries; standard includes left for Asciidoctor follow this setting. Diagram file macros and Webview resource roots retain their existing restrictions.
+
 ## Antora Project Preview
 
 When the active document is inside an Antora component directory, the preview can resolve Antora module resources without contacting an Antora site generator or remote service. The extension detects a component root by looking for `antora.yml` and `modules/`, then resolves resources in the current component.

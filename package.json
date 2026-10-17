@@ -148,6 +148,12 @@
             "Expand the document preview to the full Webview width."
           ],
           "markdownDescription": "Controls the maximum width of the document preview. Use `default` for the bundled Antora-style reading width, or `window` to expand the document to the Webview width."
+        },
+        "asciidoc-local-preview.restrictLocalIncludes": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "markdownDescription": "Controls directory restrictions for standard local `include::` targets. `false` (default) allows parent-directory and absolute local paths without a directory restriction. `true` restricts standard local includes to the document directory. Antora resource resolution keeps its component/module boundaries in both modes. Remote includes remain blocked."
         }
       }
     }

@@ -11,6 +11,7 @@ const livePreviewUpdateDelayMs = 150;
 const configurationSection = 'asciidoc-local-preview';
 const allowedPreviewHostsSetting = 'allowedPreviewHosts';
 const previewWidthSetting = 'previewWidth';
+const restrictLocalIncludesSetting = 'restrictLocalIncludes';
 type PreviewWidth = 'default' | 'window';
 
 type KrokiEmbeddedExtension = {
@@ -26,6 +27,7 @@ type AsciiDoctorExtensionRegistry = unknown;
 type WorkerConversionRequest = {
 	source: string;
 	baseDir?: string;
+	restrictLocalIncludes: boolean;
 	attributes: Record<string, string | boolean>;
 	diagramBlockNames: string[];
 	emojiMapPath: string;
@@ -55,8 +57,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertHeading', (editor) => prefixSelectionLines(editor, '== ')),
 		vscode.commands.registerTextEditorCommand('asciidoc-local-preview.insertUnorderedList', (editor) => prefixSelectionLines(editor, '* ')),
 		vscode.workspace.onDidChangeConfiguration((event) => {
-			if (event.affectsConfiguration(`${configurationSection}.${previewWidthSetting}`)) {
-				trace('preview width configuration changed');
+			if (event.affectsConfiguration(`${configurationSection}.${previewWidthSetting}`)
+				|| event.affectsConfiguration(`${configurationSection}.${restrictLocalIncludesSetting}`)) {
+				trace('preview configuration changed');
 				refreshVisiblePreviews();
 			}
 		}),
@@ -1027,6 +1030,8 @@ async function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.We
 		const converted = await convertAsciiDocInWorker({
 			source,
 			base_dir: getAsciiDocBaseDir(document),
+			restrictLocalIncludes: vscode.workspace.getConfiguration(configurationSection, document.uri)
+				.get<boolean>(restrictLocalIncludesSetting, false),
 			attributes: {
 				showtitle: true,
 				sectanchors: true,
@@ -1055,14 +1060,16 @@ async function convertAsciiDoc(document: vscode.TextDocument, webview: vscode.We
 	}
 }
 
-async function convertAsciiDocInWorker(options: {
+export async function convertAsciiDocInWorker(options: {
 	source: string;
 	base_dir?: string;
+	restrictLocalIncludes?: boolean;
 	attributes: Record<string, string | boolean>;
 }): Promise<string> {
 	const request: WorkerConversionRequest = {
 		source: options.source,
 		baseDir: options.base_dir,
+		restrictLocalIncludes: options.restrictLocalIncludes ?? false,
 		attributes: options.attributes,
 		diagramBlockNames,
 		emojiMapPath: path.join(__dirname, 'emoji-map.js'),
@@ -1176,12 +1183,36 @@ function renderEmoji(emojiMap, target, sizeAttr) {
 			defaultNumbering: 'chaptered',
 		});
 
+		if (!workerData.restrictLocalIncludes) {
+			registry.preprocessor(function () {
+				this.process(function (document, reader) {
+					const normalizeSystemPath = document.normalizeSystemPath.bind(document);
+					document.normalizeSystemPath = function (target, start, jail, options = {}) {
+						// Relax only local include resolution. Keep Asciidoctor's native
+						// nesting, tags, lines, attributes, and URI-read protection.
+						if (options.targetName === 'include file') {
+							const path = require('path');
+							const resolved = path.resolve(start || document.baseDir, target);
+							if ((/^[a-z][a-z0-9+.-]*:/i.test(target) && !path.isAbsolute(target))
+								|| resolved.startsWith(String.fromCharCode(92, 92)) || target.startsWith('//')) {
+								throw new Error('Only local file includes are allowed.');
+							}
+							return resolved;
+						}
+						return normalizeSystemPath(target, start, jail, options);
+					};
+					return reader;
+				});
+			});
+		}
+
 		const html = await asciidoctor.convert(workerData.source, {
 			safe: 'safe',
 			backend: 'html5',
 			standalone: false,
 			base_dir: workerData.baseDir,
-			attributes: workerData.attributes,
+			// Hard-unset URI reads: false alone is a soft lock in Asciidoctor 4.
+			attributes: { ...workerData.attributes, 'allow-uri-read!': '' },
 			extension_registry: registry,
 		});
 		parentPort.postMessage({ html: String(html) });
