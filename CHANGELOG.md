@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-17
+
+- [#48](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/48) Allow local includes outside the document directory by default
+
 ## [0.7.0] - 2026-10-12
 
 - [#44](https://github.com/YoshihideShirai/asciidoc-local-preview-vscode/pull/44) Update npm dependencies and migrate to Asciidoctor 4
